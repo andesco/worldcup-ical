@@ -65,29 +65,32 @@ Single Cloudflare Worker, new repo `~/Developer/worldcup-ical`, deployed to
 
 ### Routes
 - `GET /` — settings UI (build / edit a feed)
-- `POST /api/feed` — save config, return short feed ID
-- `GET /api/feed/<id>` — load config (for editing)
-- `GET /api/preview` — given a draft config, return matches that currently qualify (UI live preview)
-- `GET /feed/<id>.ics` — the calendar; reads cached data only, **0 API calls**
+- `GET /api/preview?<params>` — return matches that currently qualify for the given params (UI live preview)
+- `GET /feed.ics?<params>` — the calendar; **stateless** — config is read entirely from the URL; reads cached data only, **0 API calls**
 
 ### KV keys
+KV holds only shared cached data — there is **no per-feed server state**.
 - `fixtures` — shared fixture dataset (all feeds read this)
 - `odds` — per-fixture closeness data (implied probs / win%)
 - `fixtures_lastupdate`, `odds_lastupdate` — timestamps for ETag / 304 handling
-- `feed_<id>` — per-feed config JSON
 
-### Per-feed config shape
-```json
-{
-  "favourites": ["ESP", "CAN", "ARG"],
-  "rules": {
-    "favourites": true,
-    "bigGame":  { "enabled": true, "topX": 8 },
-    "closeGame":{ "enabled": true, "thresholdPts": 10 }
-  },
-  "created": "2026-06-07T00:00:00Z"
-}
+### Feed config = URL params (stateless, public, standard)
+The feed is fully described by its URL — portable, human-editable, no stored IDs.
+Each rule is enabled by the presence of its param:
+
 ```
+/feed.ics?teams=ESP,CAN,ARG&topx=8&close=10
+```
+
+| Param | Meaning | Rule enabled when |
+|---|---|---|
+| `teams` | comma-separated FIFA 3-letter codes | present & non-empty → Favourites on |
+| `topx`  | integer X | present → Big-game on (both teams ∈ top-X) |
+| `close` | integer threshold in pts | present → Close-game on (`|home%−away%| ≤ close`) |
+
+Omitting a param disables that rule. A feed with no recognised params is empty
+(or returns all matches — decide in planning; default: empty). Param parsing is
+the single source of truth; the UI is just a builder/parser for this URL.
 
 ## Data pipeline (cron → KV)
 
@@ -144,7 +147,8 @@ Standard VCALENDAR / VEVENT. **No emojis except country flags.**
 - `UID`: stable, derived from the API-Football fixture ID, so reschedules update
   in place rather than duplicating.
 - `SEQUENCE`: incremented when a fixture's time/venue/teams change.
-- HTTP caching: `ETag` + `Last-Modified` from latest fixture/odds update;
+- HTTP caching: `ETag` = hash of (URL params + latest fixture/odds update) so
+  distinct feeds don't collide; `Last-Modified` from latest fixture/odds update;
   `If-None-Match` / `If-Modified-Since` → `304`; `Cache-Control: public, max-age=...`.
 
 ## Web UI
@@ -153,8 +157,8 @@ Single page served at `/`:
 - Searchable checklist of all 48 teams (grouped) for favourites.
 - Toggles + inputs: Big-game on/off + X; Close-game on/off + threshold (pts).
 - Live preview (`/api/preview`) showing which upcoming matches currently qualify.
-- "Copy subscribe URL" + `webcal://` link.
-- Edit an existing feed by pasting its URL / ID.
+- "Copy subscribe URL" + `webcal://` link (the `/feed.ics?<params>` URL it builds).
+- Edit an existing feed by pasting its URL — params are parsed back into the form.
 
 ## Tournament-timeline behavior
 
@@ -186,7 +190,7 @@ manually if/when the user wants the top-X ranking re-based.
 
 - Live in-tournament re-ranking of outright odds (snapshot only).
 - Multiple bookmakers / odds comparison (single reference bookmaker).
-- Auth / user accounts (feeds are unguessable-ID public URLs, as with calsnap).
+- Auth / user accounts / stored feed IDs (feeds are stateless, public, self-describing URLs).
 - Other tournaments / seasons.
 
 ## Open items carried to planning
