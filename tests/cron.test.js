@@ -19,7 +19,6 @@ describe("cron", () => {
   });
 
   it("always writes fixtures; pulls odds only at top of hour", async () => {
-    const fixtures = [{ id: 1, utcKickoff: "2026-06-11T20:00:00Z" }];
     vi.stubGlobal("fetch", vi.fn(async (url) => ({
       ok: true,
       json: async () =>
