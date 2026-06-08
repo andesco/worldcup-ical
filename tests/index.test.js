@@ -34,6 +34,24 @@ describe("worker fetch", () => {
     expect(body).not.toContain("UID:wc2026-1@");
   });
 
+  it("serves the builder UI when /feed.ics is opened in a browser (Accept: text/html)", async () => {
+    const res = await worker.fetch(req("/feed.ics?teams=USA", { Accept: "text/html,application/xhtml+xml" }), env());
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("text/html");
+    expect(await res.text()).toContain("World Cup 2026");
+  });
+
+  it("serves the builder UI when /feed.ics is a browser navigation (Sec-Fetch-Dest: document)", async () => {
+    const res = await worker.fetch(req("/feed.ics?teams=USA", { "Sec-Fetch-Dest": "document" }), env());
+    expect(res.headers.get("content-type")).toContain("text/html");
+  });
+
+  it("serves the ICS feed to a calendar client (Accept: text/calendar)", async () => {
+    const res = await worker.fetch(req("/feed.ics?teams=USA", { Accept: "text/calendar" }), env());
+    expect(res.headers.get("content-type")).toContain("text/calendar");
+    expect(await res.text()).toContain("BEGIN:VCALENDAR");
+  });
+
   it("returns 304 when If-None-Match matches the feed ETag", async () => {
     const e = env();
     const first = await worker.fetch(req("/feed.ics?teams=USA"), e);

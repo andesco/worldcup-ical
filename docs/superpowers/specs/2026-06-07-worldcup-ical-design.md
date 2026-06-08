@@ -66,7 +66,7 @@ Single Cloudflare Worker, new repo `~/Developer/worldcup-ical`, deployed to
 ### Routes
 - `GET /` — settings UI (build / edit a feed)
 - `GET /api/preview?<params>` — return matches that currently qualify for the given params (UI live preview)
-- `GET /feed.ics?<params>` — the calendar; **stateless** — config is read entirely from the URL; reads cached data only, **0 API calls**
+- `GET /feed.ics?<params>` — **content-negotiated, stateless.** Same URL works whether opened in a browser or subscribed in a calendar app: a browser (request sends `Accept: text/html` and/or `Sec-Fetch-Dest: document`) gets the builder UI prefilled from the params (acts as the feed's landing/preview page); a calendar client / script gets the `.ics`. Default is the `.ics` feed when the browser signal is absent, so subscriptions always receive calendar data. Config is read entirely from the URL; reads cached data only, **0 API calls**.
 
 ### KV keys
 KV holds only shared cached data — there is **no per-feed server state**.
