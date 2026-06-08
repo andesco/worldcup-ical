@@ -2,8 +2,8 @@
 import { flagFor } from "./flags.js";
 
 export function icsDate(iso) {
-  return iso.replace(/[-:]/g, "").replace(/\.\d+/, "").replace("T", "T");
-  // "2026-06-11T20:00:00Z" -> "20260611T200000Z"
+  // "2026-06-11T20:00:00Z" or "...T20:00:00.000Z" -> "20260611T200000Z"
+  return iso.replace(/\.\d+Z$/, "Z").replace(/[-:]/g, "");
 }
 
 export function escapeText(s) {
@@ -32,7 +32,9 @@ export function foldLine(line) {
 
 export function matchSummary(fixture) {
   const { home, away, stage } = fixture;
-  return `${flagFor(home.code)} ${home.name} vs ${flagFor(away.code)} ${away.name} — ${stage}`;
+  const hn = home ? `${flagFor(home.code)} ${home.name}` : "TBD";
+  const an = away ? `${flagFor(away.code)} ${away.name}` : "TBD";
+  return `${hn} vs ${an} — ${stage}`;
 }
 
 // SEQUENCE increases monotonically as a fixture firms up: TBD=0, scheduled=1, finished=2.

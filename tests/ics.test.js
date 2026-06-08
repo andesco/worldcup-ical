@@ -30,6 +30,11 @@ describe("ics", () => {
     expect(matchSummary(fx())).toBe("🇪🇸 Spain vs 🇫🇷 France — Group Stage - 1");
   });
 
+  it("renders TBD for null teams in the summary", () => {
+    const tbd = { ...fx(), home: null, away: null };
+    expect(matchSummary(tbd)).toBe("TBD vs TBD — Group Stage - 1");
+  });
+
   it("builds a VEVENT with stable UID, 2h end, location, reasons", () => {
     const ev = buildVEvent({ fixture: fx(), odds: { homePct: 41, drawPct: 22, awayPct: 37 }, reasons: ["big game", "close game (41% / 37%)"] });
     expect(ev).toContain("UID:wc2026-42@worldcup.andrewe.dev");
