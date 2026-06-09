@@ -1,6 +1,6 @@
 // src/ics.js
 import { flagFor } from "./flags.js";
-import { catalog, probabilityLines, reasonLabel, stageName, teamName } from "./localization.js";
+import { catalog, probabilityLines, stageName, teamName } from "./localization.js";
 
 export function icsDate(iso) {
   // "2026-06-11T20:00:00Z" or "...T20:00:00.000Z" -> "20260611T200000Z"
@@ -52,7 +52,7 @@ export function matchSummary(fixture, opts = {}) {
   const h = sideLabel(home, fixture.slotHome, "home", o);
   const a = sideLabel(away, fixture.slotAway, "away", o);
   if (!fixture.knockout) {
-    return `${h || c.feed.tbd} ${c.feed.versus} ${a || c.feed.tbd} — ${stageName(stage, o.lang)}`;
+    return `${h || c.feed.tbd} ${c.feed.versus} ${a || c.feed.tbd}`;
   }
   // Knockout: never append the round as a suffix. R32 shows slot codes; later
   // rounds with undecided teams fall back to just the round name.
@@ -66,11 +66,14 @@ function sequenceFor(fixture) {
   return fixture.home && fixture.away ? 1 : 0;
 }
 
-function descriptionFor(fixture, odds, reasons, opts) {
+function descriptionFor(fixture, odds, opts) {
   const c = catalog(opts.lang);
-  const lines = [`${c.feed.included}: ${reasons.map((reason) => reasonLabel(reason, opts.lang)).join("; ")}`];
+  const lines = [];
   const home = fixture.home && teamName(fixture.home.code, opts.lang, fixture.home.name);
   const away = fixture.away && teamName(fixture.away.code, opts.lang, fixture.away.name);
+  if (!fixture.knockout) {
+    lines.push(`${stageName(fixture.stage, opts.lang)}: ${home || c.feed.tbd} ${c.feed.versus} ${away || c.feed.tbd}`);
+  }
   lines.push(...probabilityLines(fixture, odds, opts.lang));
   if (fixture.finished && fixture.score) {
     lines.push(`${c.feed.final}: ${home} ${fixture.score.home}-${fixture.score.away} ${away}`);
@@ -102,7 +105,8 @@ export function buildVEvent({ fixture, odds, reasons, opts = {} }) {
       : fixture.venue.name;
     lines.push(foldLine(`LOCATION:${escapeText(loc)}`));
   }
-  lines.push(textProperty("DESCRIPTION", descriptionFor(fixture, odds, reasons, o), o.lang));
+  const description = descriptionFor(fixture, odds, o);
+  if (description) lines.push(textProperty("DESCRIPTION", description, o.lang));
   lines.push("END:VEVENT");
   return lines.join("\r\n");
 }

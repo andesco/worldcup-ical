@@ -5,7 +5,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 const sample = {
   matches: [
-    { id: 1, utcDate: "2026-06-11T19:00:00Z", status: "TIMED", stage: "GROUP_STAGE", group: "GROUP_A",
+    { id: 537327, utcDate: "2026-06-11T19:00:00Z", status: "TIMED", stage: "GROUP_STAGE", group: "GROUP_A",
       homeTeam: { name: "Mexico" }, awayTeam: { name: "South Africa" },
       score: { fullTime: { home: null, away: null } } },
     { id: 2, utcDate: "2026-07-10T18:00:00Z", status: "FINISHED", stage: "LAST_16", group: null,
@@ -28,8 +28,9 @@ describe("football-data client", () => {
   it("normalises fixtures, mapping names to codes", () => {
     const fx = normalizeFixtures(sample);
     expect(fx[0]).toMatchObject({
-      id: 1, utcKickoff: "2026-06-11T19:00:00Z", finished: false, stage: "Group A",
-      venue: null, home: { code: "MEX", name: "Mexico" }, away: { code: "RSA", name: "South Africa" },
+      id: 537327, utcKickoff: "2026-06-11T19:00:00Z", finished: false, stage: "Group A",
+      venue: { name: "Estadio Azteca", city: "Mexico City" },
+      home: { code: "MEX", name: "Mexico" }, away: { code: "RSA", name: "South Africa" },
     });
   });
 

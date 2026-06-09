@@ -26,19 +26,19 @@ describe("ics", () => {
     });
   });
 
-  it("bookends flags around the matchup, group suffix kept", () => {
-    expect(matchSummary(fx())).toBe("🇪🇸 Spain vs. France 🇫🇷 — Group Stage - 1");
+  it("bookends flags around the matchup without a group suffix", () => {
+    expect(matchSummary(fx())).toBe("🇪🇸 Spain vs. France 🇫🇷");
   });
 
   it("supports flags-off and FIFA-code options", () => {
-    expect(matchSummary(fx(), { flags: false })).toBe("Spain vs. France — Group Stage - 1");
-    expect(matchSummary(fx(), { code: true })).toBe("🇪🇸 ESP vs. FRA 🇫🇷 — Group Stage - 1");
-    expect(matchSummary(fx(), { flags: false, code: true })).toBe("ESP vs. FRA — Group Stage - 1");
+    expect(matchSummary(fx(), { flags: false })).toBe("Spain vs. France");
+    expect(matchSummary(fx(), { code: true })).toBe("🇪🇸 ESP vs. FRA 🇫🇷");
+    expect(matchSummary(fx(), { flags: false, code: true })).toBe("ESP vs. FRA");
   });
 
   it("renders TBD for null teams in a group game", () => {
     const tbd = { ...fx(), home: null, away: null };
-    expect(matchSummary(tbd)).toBe("TBD vs. TBD — Group Stage - 1");
+    expect(matchSummary(tbd)).toBe("TBD vs. TBD");
   });
 
   it("uses R32 slot codes for undecided knockout games, no round suffix", () => {
@@ -59,16 +59,29 @@ describe("ics", () => {
     expect(matchSummary(ko)).toBe("🇪🇸 Spain vs. France 🇫🇷");
   });
 
-  it("builds a VEVENT with stable UID, 2h end, location, reasons", () => {
+  it("builds a VEVENT with stable UID, 2h end, location, group matchup, and odds", () => {
     const ev = buildVEvent({ fixture: fx(), odds: { homePct: 41, drawPct: 22, awayPct: 37 }, reasons: [{ id: "bigGame" }, { id: "competitive", values: { home: 41, away: 37, draw: 22 } }] });
     expect(ev).toContain("UID:wc2026-42@worldcup.andrewe.dev");
     expect(ev).toContain("DTSTART:20260611T200000Z");
     expect(ev).toContain("DTEND:20260611T220000Z");
     expect(ev).toContain("LOCATION:SoFi Stadium\\, Inglewood");
     const unfolded = ev.replace(/\r\n /g, "");
-    expect(unfolded).toContain("Included: big game\\; competitive game");
+    expect(unfolded).not.toContain("Included:");
+    expect(unfolded).toContain("Group Stage - 1: Spain vs. France");
     expect(unfolded).toContain("Spain: 41%\\nFrance: 37%\\ndraw: 22%");
     expect(ev).toContain("SEQUENCE:1");
+  });
+
+  it("puts a group label and full country names in the description when the title uses codes", () => {
+    const ev = buildVEvent({
+      fixture: fx({ stage: "Group A" }),
+      odds: null,
+      reasons: [{ id: "favourite" }],
+      opts: { flags: false, code: true },
+    });
+    expect(ev).toContain("SUMMARY:ESP vs. FRA");
+    expect(ev).toContain("DESCRIPTION:Group A: Spain vs. France");
+    expect(ev).not.toContain("Included:");
   });
 
   it("includes the final score once finished", () => {
@@ -90,11 +103,13 @@ describe("ics", () => {
       fixture: fx(),
       odds: { homePct: 41, drawPct: 22, awayPct: 37 },
       reasons: [{ id: "bigGame" }],
-      opts: { flags: false, lang: "es" },
+      opts: { flags: false, code: true, lang: "es" },
     });
-    expect(ev).toContain("SUMMARY;LANGUAGE=es:España vs. Francia — Fase de grupos - 1");
-    expect(ev).toContain("DESCRIPTION;LANGUAGE=es:Incluido: gran partido");
-    expect(ev.replace(/\r\n /g, "")).toContain("España: 41%\\nFrancia: 37%\\nempate: 22%");
+    expect(ev).toContain("SUMMARY;LANGUAGE=es:ESP vs. FRA");
+    const unfolded = ev.replace(/\r\n /g, "");
+    expect(unfolded).toContain("DESCRIPTION;LANGUAGE=es:Fase de grupos - 1: España vs. Francia");
+    expect(unfolded).toContain("España: 41%\\nFrancia: 37%\\nempate: 22%");
+    expect(unfolded).not.toContain("Incluido:");
     expect(ev).not.toContain("LOCATION;LANGUAGE=");
   });
 

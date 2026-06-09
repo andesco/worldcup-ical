@@ -4,6 +4,7 @@
 // filled in as results land) is competitions/WC/matches?season=2026.
 import { codeForFd, nameFor } from "./flags.js";
 import { r32Slots } from "./r32-bracket.js";
+import { venueForFixture } from "./venues.js";
 
 export const FD_BASE = "https://api.football-data.org/v4";
 
@@ -48,7 +49,7 @@ export function normalizeFixtures(json) {
       hostOpener: false, // set below
       slotHome: slots ? slots.home : null,
       slotAway: slots ? slots.away : null,
-      venue: null, // football-data free tier does not expose venue
+      venue: venueForFixture(m.id),
       home: team(m.homeTeam),
       away: team(m.awayTeam),
       score: finished && ft.home != null ? { home: ft.home, away: ft.away } : null,
