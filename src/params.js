@@ -12,8 +12,10 @@ export function parseFeedParams(searchParams) {
       .map((s) => s.trim().toUpperCase())
       .filter(Boolean)
   );
-  const topx = posInt(searchParams.get("topx"));
+  const rank = posInt(searchParams.get("rank"));
   const competitive = posInt(searchParams.get("competitive"));
-  const hasAnyRule = teams.size > 0 || topx !== null || competitive !== null;
-  return { teams, topx, competitive, hasAnyRule };
+  const knockout = searchParams.has("knockout");
+  const hasAnyRule =
+    teams.size > 0 || rank !== null || competitive !== null || knockout;
+  return { teams, rank, competitive, knockout, hasAnyRule };
 }

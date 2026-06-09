@@ -7,15 +7,21 @@ import { competitiveGap } from "./competitive.js";
 export function evaluateMatch(fixture, odds, config) {
   const reasons = [];
   const { home, away } = fixture;
-  const haveTeams = !!home && !!away; // TBD knockout slots can't satisfy any rule
+  const haveTeams = !!home && !!away; // team-based rules can't judge TBD slots
+
+  // Knockout rule includes every knockout fixture, even before its teams are
+  // decided (so all 32 slots land on the calendar).
+  if (config.knockout && fixture.knockout) {
+    reasons.push("knockout game");
+  }
 
   if (haveTeams && config.teams.size > 0 &&
       (config.teams.has(home.code) || config.teams.has(away.code))) {
     reasons.push("favourite team");
   }
 
-  if (haveTeams && config.topx != null &&
-      inTopX(home.code, config.topx) && inTopX(away.code, config.topx)) {
+  if (haveTeams && config.rank != null &&
+      inTopX(home.code, config.rank) && inTopX(away.code, config.rank)) {
     reasons.push("big game");
   }
 

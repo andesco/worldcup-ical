@@ -38,6 +38,7 @@ export function normalizeFixtures(json) {
       status: m.status,
       finished,
       stage: stageLabel(m.stage, m.group),
+      knockout: m.stage !== "GROUP_STAGE", // R32 through Final (32 games)
       venue: null, // football-data free tier does not expose venue
       home: team(m.homeTeam),
       away: team(m.awayTeam),

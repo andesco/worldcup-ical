@@ -10,23 +10,29 @@ describe("parseFeedParams", () => {
     expect(c.hasAnyRule).toBe(true);
   });
 
-  it("parses topx and competitive as integers", () => {
-    const c = cfg("?topx=8&competitive=10");
-    expect(c.topx).toBe(8);
+  it("parses rank and competitive as integers", () => {
+    const c = cfg("?rank=8&competitive=10");
+    expect(c.rank).toBe(8);
     expect(c.competitive).toBe(10);
   });
 
   it("disables a rule when its param is absent", () => {
     const c = cfg("?teams=ESP");
-    expect(c.topx).toBeNull();
+    expect(c.rank).toBeNull();
     expect(c.competitive).toBeNull();
   });
 
   it("ignores empty/invalid values", () => {
-    const c = cfg("?teams=&topx=abc&competitive=-3");
+    const c = cfg("?teams=&rank=abc&competitive=-3");
     expect(c.teams.size).toBe(0);
-    expect(c.topx).toBeNull();
+    expect(c.rank).toBeNull();
     expect(c.competitive).toBeNull();
     expect(c.hasAnyRule).toBe(false);
+  });
+
+  it("treats the knockout flag as a boolean rule", () => {
+    expect(cfg("?knockout=1").knockout).toBe(true);
+    expect(cfg("?knockout=1").hasAnyRule).toBe(true);
+    expect(cfg("?teams=ESP").knockout).toBe(false);
   });
 });

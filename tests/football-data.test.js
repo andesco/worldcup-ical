@@ -45,6 +45,13 @@ describe("football-data client", () => {
     expect(fx[2].away).toBeNull();
   });
 
+  it("flags knockout stages (everything except GROUP_STAGE)", () => {
+    const fx = normalizeFixtures(sample);
+    expect(fx[0].knockout).toBe(false); // GROUP_STAGE
+    expect(fx[1].knockout).toBe(true);  // LAST_16
+    expect(fx[2].knockout).toBe(true);  // SEMI_FINALS
+  });
+
   it("sends the X-Auth-Token header to the WC season endpoint", async () => {
     const spy = vi.fn(async () => ({ ok: true, json: async () => ({ matches: [] }) }));
     vi.stubGlobal("fetch", spy);

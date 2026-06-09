@@ -115,10 +115,10 @@ export function renderSettingsPage() {
           <input type="checkbox" id="bigGame-on">
           both teams are ranked in the top
           <span class="num">
-            <input type="number" id="topx" min="1" max="48" value="8">
+            <input type="number" id="rank" min="1" max="48" value="12">
             <span class="num-btns">
-              <button type="button" data-target="topx" data-step="1" aria-label="increase">▲</button>
-              <button type="button" data-target="topx" data-step="-1" aria-label="decrease">▼</button>
+              <button type="button" data-target="rank" data-step="1" aria-label="increase">▲</button>
+              <button type="button" data-target="rank" data-step="-1" aria-label="decrease">▼</button>
             </span>
           </span>
           by odds of winning the tournament
@@ -129,15 +129,23 @@ export function renderSettingsPage() {
         <legend>Competitive games</legend>
         <label class="rule-row">
           <input type="checkbox" id="competitiveGame-on">
-          odds for each team are within
+          odds for each team winning the match are within
           <span class="num">
-            <input type="number" id="competitive" min="1" max="50" value="10">
+            <input type="number" id="competitive" min="1" max="50" value="25">
             <span class="num-btns">
               <button type="button" data-target="competitive" data-step="1" aria-label="increase">▲</button>
               <button type="button" data-target="competitive" data-step="-1" aria-label="decrease">▼</button>
             </span>
           </span>
           percent
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Knockout games</legend>
+        <label class="rule-row">
+          <input type="checkbox" id="knockout-on">
+          all 32 knockout games
         </label>
       </fieldset>
 
@@ -183,8 +191,9 @@ export function renderSettingsPage() {
       var teams = [].slice.call(document.querySelectorAll('[data-role="team-list"] input:checked')).map(function (c) { return c.value; });
       var p = new URLSearchParams();
       if (teams.length) p.set('teams', teams.join(','));
-      if (document.getElementById('bigGame-on').checked) p.set('topx', document.getElementById('topx').value);
+      if (document.getElementById('bigGame-on').checked) p.set('rank', document.getElementById('rank').value);
       if (document.getElementById('competitiveGame-on').checked) p.set('competitive', document.getElementById('competitive').value);
+      if (document.getElementById('knockout-on').checked) p.set('knockout', '1');
       return p;
     }
 
@@ -250,8 +259,9 @@ export function renderSettingsPage() {
         var cb = document.getElementById('t-' + code.toUpperCase());
         if (cb) cb.checked = true;
       });
-      if (sp.get('topx')) { document.getElementById('bigGame-on').checked = true; document.getElementById('topx').value = sp.get('topx'); }
+      if (sp.get('rank')) { document.getElementById('bigGame-on').checked = true; document.getElementById('rank').value = sp.get('rank'); }
       if (sp.get('competitive')) { document.getElementById('competitiveGame-on').checked = true; document.getElementById('competitive').value = sp.get('competitive'); }
+      if (sp.has('knockout')) { document.getElementById('knockout-on').checked = true; }
       update();
     })();
   </script>

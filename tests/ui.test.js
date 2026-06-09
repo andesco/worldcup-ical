@@ -11,7 +11,8 @@ describe("settings page", () => {
   it("includes team checkboxes, rule inputs, and an output URL field", () => {
     const html = renderSettingsPage();
     expect(html).toContain('data-role="team-list"');
-    expect(html).toContain('id="topx"');
+    expect(html).toContain('id="rank"');
+    expect(html).toContain('id="knockout-on"');
     expect(html).toContain('id="competitive"');
     expect(html).toContain('id="subscribe-url"');
   });

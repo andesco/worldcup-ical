@@ -7,7 +7,7 @@ const fx = (over = {}) => ({
   home: { code: "ESP", name: "Spain" }, away: { code: "NOR", name: "Norway" },
   score: null, ...over,
 });
-const cfg = (over = {}) => ({ teams: new Set(), topx: null, competitive: null, ...over });
+const cfg = (over = {}) => ({ teams: new Set(), rank: null, competitive: null, ...over });
 
 describe("evaluateMatch", () => {
   it("includes a match with a favourite team", () => {
@@ -17,9 +17,9 @@ describe("evaluateMatch", () => {
   });
 
   it("big-game needs BOTH teams in top-X", () => {
-    expect(evaluateMatch(fx(), null, cfg({ topx: 8 })).included).toBe(false);
+    expect(evaluateMatch(fx(), null, cfg({ rank: 8 })).included).toBe(false);
     const both = fx({ away: { code: "FRA", name: "France" } });
-    const r = evaluateMatch(both, null, cfg({ topx: 8 }));
+    const r = evaluateMatch(both, null, cfg({ rank: 8 }));
     expect(r.included).toBe(true);
     expect(r.reasons).toContain("big game");
   });
@@ -33,15 +33,24 @@ describe("evaluateMatch", () => {
     expect(r.reasons).toContain("competitive game (40% / 36%, draw 24%)");
   });
 
-  it("ignores rules for fixtures with TBD teams", () => {
+  it("ignores team-based rules for fixtures with TBD teams", () => {
     const tbd = fx({ home: null, away: null });
-    expect(evaluateMatch(tbd, null, cfg({ teams: new Set(["ESP"]), topx: 8 })).included).toBe(false);
+    expect(evaluateMatch(tbd, null, cfg({ teams: new Set(["ESP"]), rank: 8 })).included).toBe(false);
+  });
+
+  it("knockout rule includes knockout fixtures even with TBD teams", () => {
+    const tbdKO = fx({ home: null, away: null, knockout: true, stage: "Round of 32" });
+    const r = evaluateMatch(tbdKO, null, cfg({ knockout: true }));
+    expect(r.included).toBe(true);
+    expect(r.reasons).toContain("knockout game");
+    // a group-stage game is not a knockout game
+    expect(evaluateMatch(fx({ knockout: false }), null, cfg({ knockout: true })).included).toBe(false);
   });
 
   it("collects multiple reasons and de-dupes inclusion", () => {
     const both = fx({ away: { code: "FRA", name: "France" } });
     const r = evaluateMatch(both, { homePct: 41, drawPct: 22, awayPct: 37 },
-      cfg({ teams: new Set(["ESP"]), topx: 8, competitive: 10 }));
+      cfg({ teams: new Set(["ESP"]), rank: 8, competitive: 10 }));
     expect(r.included).toBe(true);
     expect(r.reasons).toEqual([
       "favourite team", "big game", "competitive game (41% / 37%, draw 22%)",
