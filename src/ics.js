@@ -30,11 +30,32 @@ export function foldLine(line) {
   return out.join("\r\n");
 }
 
-export function matchSummary(fixture) {
+// One side of a matchup. Flags bookend the match (home: flag-then-label,
+// away: label-then-flag). Falls back to the bracket slot code (e.g. "A1", "X3")
+// when the team is undecided, or null when there's no slot either.
+function sideLabel(team, slot, side, opts) {
+  if (team) {
+    const label = opts.code ? team.code : team.name;
+    if (!opts.flags) return label;
+    const f = flagFor(team.code);
+    return side === "home" ? `${f} ${label}` : `${label} ${f}`;
+  }
+  return slot || null;
+}
+
+// opts: { flags (default true), code (default false: full name vs FIFA 3-letter) }
+export function matchSummary(fixture, opts = {}) {
+  const o = { flags: true, code: false, ...opts };
   const { home, away, stage } = fixture;
-  const hn = home ? `${flagFor(home.code)} ${home.name}` : "TBD";
-  const an = away ? `${flagFor(away.code)} ${away.name}` : "TBD";
-  return `${hn} vs. ${an} — ${stage}`;
+  const h = sideLabel(home, fixture.slotHome, "home", o);
+  const a = sideLabel(away, fixture.slotAway, "away", o);
+  if (!fixture.knockout) {
+    return `${h || "TBD"} vs. ${a || "TBD"} — ${stage}`;
+  }
+  // Knockout: never append the round as a suffix. R32 shows slot codes; later
+  // rounds with undecided teams fall back to just the round name.
+  if (h && a) return `${h} vs. ${a}`;
+  return stage;
 }
 
 // SEQUENCE increases monotonically as a fixture firms up: TBD=0, scheduled=1, finished=2.
@@ -52,7 +73,7 @@ function descriptionFor(fixture, odds, reasons) {
   return lines.join("\n");
 }
 
-export function buildVEvent({ fixture, odds, reasons }) {
+export function buildVEvent({ fixture, odds, reasons, opts }) {
   const start = icsDate(fixture.utcKickoff);
   const end = icsDate(new Date(Date.parse(fixture.utcKickoff) + 2 * 3600 * 1000).toISOString());
   const lines = [
@@ -62,7 +83,7 @@ export function buildVEvent({ fixture, odds, reasons }) {
     `DTSTART:${start}`,
     `DTEND:${end}`,
     `SEQUENCE:${sequenceFor(fixture)}`,
-    foldLine(`SUMMARY:${escapeText(matchSummary(fixture))}`),
+    foldLine(`SUMMARY:${escapeText(matchSummary(fixture, opts))}`),
   ];
   if (fixture.venue && fixture.venue.name) {
     const loc = fixture.venue.city

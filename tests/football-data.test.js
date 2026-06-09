@@ -21,7 +21,7 @@ describe("football-data client", () => {
   it("labels stages and groups", () => {
     expect(stageLabel("GROUP_STAGE", "GROUP_A")).toBe("Group A");
     expect(stageLabel("LAST_32")).toBe("Round of 32");
-    expect(stageLabel("QUARTER_FINALS")).toBe("Quarter-final");
+    expect(stageLabel("QUARTER_FINALS")).toBe("Round of 8");
     expect(stageLabel("FINAL")).toBe("Final");
   });
 
@@ -50,6 +50,16 @@ describe("football-data client", () => {
     expect(fx[0].knockout).toBe(false); // GROUP_STAGE
     expect(fx[1].knockout).toBe(true);  // LAST_16
     expect(fx[2].knockout).toBe(true);  // SEMI_FINALS
+  });
+
+  it("attaches R32 bracket-slot codes by kickoff time", () => {
+    const fx = normalizeFixtures({ matches: [
+      { id: 50, utcDate: "2026-06-28T19:00:00Z", status: "TIMED", stage: "LAST_32", group: null,
+        homeTeam: { name: null }, awayTeam: { name: null }, score: { fullTime: {} } },
+    ]});
+    expect(fx[0].slotHome).toBe("A2");
+    expect(fx[0].slotAway).toBe("B2");
+    expect(fx[0].stage).toBe("Round of 32");
   });
 
   it("flags each host nation's earliest home match as a host opener", () => {

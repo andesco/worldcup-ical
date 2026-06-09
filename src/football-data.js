@@ -3,13 +3,14 @@
 // Auth: HTTP header "X-Auth-Token". The full schedule (incl. knockout bracket,
 // filled in as results land) is competitions/WC/matches?season=2026.
 import { codeForFd, nameFor } from "./flags.js";
+import { r32Slots } from "./r32-bracket.js";
 
 export const FD_BASE = "https://api.football-data.org/v4";
 
 const STAGE_LABELS = {
   LAST_32: "Round of 32",
   LAST_16: "Round of 16",
-  QUARTER_FINALS: "Quarter-final",
+  QUARTER_FINALS: "Round of 8",
   SEMI_FINALS: "Semi-final",
   THIRD_PLACE: "Third-place play-off",
   FINAL: "Final",
@@ -34,6 +35,9 @@ export function normalizeFixtures(json) {
   const fixtures = (json.matches || []).map((m) => {
     const finished = m.status === "FINISHED";
     const ft = (m.score && m.score.fullTime) || {};
+    // Bracket-slot placeholders for R32 (e.g. "A1", "C2", "X3") so undecided
+    // games read meaningfully instead of "TBD vs. TBD".
+    const slots = m.stage === "LAST_32" ? r32Slots(m.utcDate) : null;
     return {
       id: m.id,
       utcKickoff: m.utcDate, // already ISO 8601 Z
@@ -42,6 +46,8 @@ export function normalizeFixtures(json) {
       stage: stageLabel(m.stage, m.group),
       knockout: m.stage !== "GROUP_STAGE", // R32 through Final (32 games)
       hostOpener: false, // set below
+      slotHome: slots ? slots.home : null,
+      slotAway: slots ? slots.away : null,
       venue: null, // football-data free tier does not expose venue
       home: team(m.homeTeam),
       away: team(m.awayTeam),

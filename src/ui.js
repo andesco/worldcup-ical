@@ -149,6 +149,18 @@ export function renderSettingsPage() {
         </label>
       </fieldset>
 
+      <fieldset>
+        <legend>Options</legend>
+        <label class="rule-row">
+          <input type="checkbox" id="flags-on" checked>
+          show emoji flags
+        </label>
+        <label class="rule-row">
+          <input type="checkbox" id="code-on">
+          use FIFA three-letter country code
+        </label>
+      </fieldset>
+
       <article id="urlOutput">
         <header>Your calendar subscription URL:</header>
         <code id="subscribe-url"></code>
@@ -195,6 +207,9 @@ export function renderSettingsPage() {
       if (document.getElementById('competitiveGame-on').checked) p.set('competitive', document.getElementById('competitive').value);
       if (document.getElementById('knockout-on').checked) p.set('knockout', '1');
       if (document.getElementById('openers-on').checked) p.set('openers', '1');
+      // Display options: flags on by default (encode only when off), code off by default.
+      if (!document.getElementById('flags-on').checked) p.set('flags', '0');
+      if (document.getElementById('code-on').checked) p.set('code', '1');
       return p;
     }
 
@@ -216,10 +231,11 @@ export function renderSettingsPage() {
         matches.slice(0, 40).forEach(function (m) {
           var li = document.createElement('li');
           var when = new Date(m.utcKickoff).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
-          var home = m.home ? m.home.name : 'TBD';
-          var away = m.away ? m.away.name : 'TBD';
-          li.innerHTML = when + ' — ' + home + ' vs. ' + away +
-            ' <span class="reasons">· ' + m.reasons.join(', ') + '</span>';
+          li.textContent = when + ' — ' + m.summary;
+          var r = document.createElement('span');
+          r.className = 'reasons';
+          r.textContent = ' · ' + m.reasons.join(', ');
+          li.appendChild(r);
           ul.appendChild(li);
         });
       });
@@ -276,6 +292,10 @@ export function renderSettingsPage() {
 
       if (sp.has('knockout') || fresh) { document.getElementById('knockout-on').checked = true; }
       if (sp.has('openers')) { document.getElementById('openers-on').checked = true; }
+
+      // Display options: flags default on (off only when flags=0); code default off.
+      document.getElementById('flags-on').checked = sp.get('flags') !== '0';
+      document.getElementById('code-on').checked = sp.get('code') === '1';
 
       update();
     })();

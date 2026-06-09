@@ -1,6 +1,7 @@
 // src/index.js
 import { parseFeedParams } from "./params.js";
 import { buildFeed, selectMatches } from "./feed.js";
+import { matchSummary } from "./ics.js";
 import { handleScheduled } from "./cron.js";
 import { renderSettingsPage } from "./ui.js";
 
@@ -73,6 +74,7 @@ async function serveFeed(url, request, env) {
 async function servePreview(url, env) {
   const { fixtures, oddsMap } = await readCache(env);
   const config = configFrom(url);
+  const opts = { flags: config.flags, code: config.code };
   const now = Date.now();
   const matches = selectMatches(fixtures, oddsMap, config)
     .filter((s) => Date.parse(s.fixture.utcKickoff) >= now)
@@ -80,9 +82,7 @@ async function servePreview(url, env) {
     .map((s) => ({
       id: s.fixture.id,
       utcKickoff: s.fixture.utcKickoff,
-      stage: s.fixture.stage,
-      home: s.fixture.home,
-      away: s.fixture.away,
+      summary: matchSummary(s.fixture, opts),
       reasons: s.reasons,
     }));
   return Response.json({ matches });

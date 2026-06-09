@@ -26,13 +26,37 @@ describe("ics", () => {
     });
   });
 
-  it("builds a flags-only summary with stage suffix", () => {
-    expect(matchSummary(fx())).toBe("🇪🇸 Spain vs. 🇫🇷 France — Group Stage - 1");
+  it("bookends flags around the matchup, group suffix kept", () => {
+    expect(matchSummary(fx())).toBe("🇪🇸 Spain vs. France 🇫🇷 — Group Stage - 1");
   });
 
-  it("renders TBD for null teams in the summary", () => {
+  it("supports flags-off and FIFA-code options", () => {
+    expect(matchSummary(fx(), { flags: false })).toBe("Spain vs. France — Group Stage - 1");
+    expect(matchSummary(fx(), { code: true })).toBe("🇪🇸 ESP vs. FRA 🇫🇷 — Group Stage - 1");
+    expect(matchSummary(fx(), { flags: false, code: true })).toBe("ESP vs. FRA — Group Stage - 1");
+  });
+
+  it("renders TBD for null teams in a group game", () => {
     const tbd = { ...fx(), home: null, away: null };
     expect(matchSummary(tbd)).toBe("TBD vs. TBD — Group Stage - 1");
+  });
+
+  it("uses R32 slot codes for undecided knockout games, no round suffix", () => {
+    const r32 = { ...fx(), home: null, away: null, knockout: true, stage: "Round of 32", slotHome: "A1", slotAway: "X3" };
+    expect(matchSummary(r32)).toBe("A1 vs. X3");
+    // partial: one team known, slot for the other
+    const partial = { ...r32, home: { code: "COL", name: "Colombia" } };
+    expect(matchSummary(partial)).toBe("🇨🇴 Colombia vs. X3");
+  });
+
+  it("falls back to the round name for undecided R16+ games (no slots)", () => {
+    const r16 = { ...fx(), home: null, away: null, knockout: true, stage: "Round of 16", slotHome: null, slotAway: null };
+    expect(matchSummary(r16)).toBe("Round of 16");
+  });
+
+  it("decided knockout games show the matchup with no round suffix", () => {
+    const ko = { ...fx(), knockout: true, stage: "Final" };
+    expect(matchSummary(ko)).toBe("🇪🇸 Spain vs. France 🇫🇷");
   });
 
   it("builds a VEVENT with stable UID, 2h end, location, reasons", () => {
