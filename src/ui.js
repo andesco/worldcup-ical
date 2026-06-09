@@ -15,11 +15,16 @@ export function renderSettingsPage() {
   <title>World Cup 2026 — Custom Calendar</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
   <style>
+    /* Column count is always a factor of 48 so all 48 teams fill complete,
+       equal-length columns (no ragged final row). */
     .team-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(11em, 1fr));
+      grid-template-columns: repeat(2, 1fr);
       gap: 0.5rem;
     }
+    @media (min-width: 576px)  { .team-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (min-width: 768px)  { .team-grid { grid-template-columns: repeat(4, 1fr); } }
+    @media (min-width: 1024px) { .team-grid { grid-template-columns: repeat(6, 1fr); } }
     .team-grid label {
       font-weight: normal;
       margin: 0 0 0.5rem 0;
