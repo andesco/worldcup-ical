@@ -33,9 +33,30 @@ describe("evaluateMatch", () => {
     expect(r.reasons).toContainEqual({ id: "competitive", values: { home: 40, away: 36, draw: 24 } });
   });
 
-  it("ignores team-based rules for fixtures with TBD teams", () => {
+  it("ignores selected-team and ranking rules when both teams are TBD", () => {
     const tbd = fx({ home: null, away: null });
     expect(evaluateMatch(tbd, null, cfg({ teams: new Set(["ESP"]), rank: 8 })).included).toBe(false);
+  });
+
+  it("includes a partially decided knockout fixture as soon as a selected team is known", () => {
+    const selectedHome = fx({ away: null, knockout: true, stage: "Round of 32" });
+    const selectedAway = fx({ home: null, knockout: true, stage: "Round of 32" });
+
+    expect(evaluateMatch(selectedHome, null, cfg({ teams: new Set(["ESP"]) }))).toMatchObject({
+      included: true,
+      reasons: [{ id: "favourite" }],
+    });
+    expect(evaluateMatch(selectedAway, null, cfg({ teams: new Set(["NOR"]) }))).toMatchObject({
+      included: true,
+      reasons: [{ id: "favourite" }],
+    });
+    expect(evaluateMatch(selectedHome, null, cfg({ teams: new Set(["NOR"]) })).included).toBe(false);
+  });
+
+  it("still requires both teams for ranking and competitive rules", () => {
+    const partial = fx({ away: null, knockout: true, stage: "Round of 32" });
+    const odds = { homePct: 40, drawPct: 24, awayPct: 36 };
+    expect(evaluateMatch(partial, odds, cfg({ rank: 8, competitive: 10 })).included).toBe(false);
   });
 
   it("knockout rule includes knockout fixtures even with TBD teams", () => {

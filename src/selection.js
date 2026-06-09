@@ -7,7 +7,7 @@ import { competitiveGap } from "./competitive.js";
 export function evaluateMatch(fixture, odds, config) {
   const reasons = [];
   const { home, away } = fixture;
-  const haveTeams = !!home && !!away; // team-based rules can't judge TBD slots
+  const haveTeams = !!home && !!away;
 
   // Knockout rule includes every knockout fixture, even before its teams are
   // decided (so all 32 slots land on the calendar).
@@ -19,8 +19,10 @@ export function evaluateMatch(fixture, odds, config) {
     reasons.push({ id: "hostOpener" });
   }
 
-  if (haveTeams && config.teams.size > 0 &&
-      (config.teams.has(home.code) || config.teams.has(away.code))) {
+  // A selected team is enough to include a partially decided knockout fixture;
+  // the opponent does not need to be known yet.
+  if (config.teams.size > 0 &&
+      ((home && config.teams.has(home.code)) || (away && config.teams.has(away.code)))) {
     reasons.push({ id: "favourite" });
   }
 
