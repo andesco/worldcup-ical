@@ -54,7 +54,7 @@ export function renderSettingsPage(locale = "en") {
     fieldset { margin-top: 1.25rem; }
     fieldset legend { font-size: 1.25rem; font-weight: bold; }
     .rule-row { min-height: 2.5rem; }
-    .language-row { display: flex; align-items: center; gap: 0.5rem; }
+    .language-row { display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem; }
     .language-row select { width: auto; margin: 0; }
     .language-icon { width: 1.25rem; height: 1.25rem; flex: none; fill: currentColor; }
 
