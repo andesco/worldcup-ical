@@ -137,7 +137,7 @@ export function renderSettingsPage() {
               <button type="button" data-target="competitive" data-step="-1" aria-label="decrease">▼</button>
             </span>
           </span>
-          percent
+          percentage points
         </label>
       </fieldset>
 
@@ -255,7 +255,11 @@ export function renderSettingsPage() {
 
     (function prefill() {
       var sp = new URLSearchParams(location.search);
-      (sp.get('teams') || '').split(',').filter(Boolean).forEach(function (code) {
+      // Default to the three host nations on a fresh visit (no teams param).
+      var teamCodes = sp.has('teams')
+        ? (sp.get('teams') || '').split(',').filter(Boolean)
+        : ['CAN', 'MEX', 'USA'];
+      teamCodes.forEach(function (code) {
         var cb = document.getElementById('t-' + code.toUpperCase());
         if (cb) cb.checked = true;
       });
