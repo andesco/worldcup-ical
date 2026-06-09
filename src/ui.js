@@ -49,7 +49,6 @@ export function renderSettingsPage() {
     fieldset { margin-top: 1.25rem; }
     fieldset legend { font-size: 1.25rem; font-weight: bold; }
     .rule-row { min-height: 2.5rem; }
-    .rule-hint { margin: 0.25rem 0 0 1.9rem; color: var(--pico-muted-color); }
 
     /* Custom number stepper: native spin arrows are tiny and unstyleable in
        Safari, so we hide them and stack our own ▲/▼ buttons, each half the
@@ -114,7 +113,7 @@ export function renderSettingsPage() {
         <legend>Big games</legend>
         <label class="rule-row">
           <input type="checkbox" id="bigGame-on">
-          both teams ranked in the top
+          both teams are ranked in the top
           <span class="num">
             <input type="number" id="topx" min="1" max="48" value="8">
             <span class="num-btns">
@@ -122,7 +121,7 @@ export function renderSettingsPage() {
               <button type="button" data-target="topx" data-step="-1" aria-label="decrease">▼</button>
             </span>
           </span>
-          by odds to win the World Cup
+          by odds of winning the tournament
         </label>
       </fieldset>
 
@@ -130,7 +129,7 @@ export function renderSettingsPage() {
         <legend>Competitive games</legend>
         <label class="rule-row">
           <input type="checkbox" id="competitiveGame-on">
-          the two teams' win chances are within
+          odds for each team are within
           <span class="num">
             <input type="number" id="competitive" min="1" max="50" value="10">
             <span class="num-btns">
@@ -138,9 +137,8 @@ export function renderSettingsPage() {
               <button type="button" data-target="competitive" data-step="-1" aria-label="decrease">▼</button>
             </span>
           </span>
-          percentage points
+          percent
         </label>
-        <p class="rule-hint"><small>How evenly matched the game is. Smaller = tighter. The leftover percentage is the chance of a draw.</small></p>
       </fieldset>
 
       <article id="urlOutput">
