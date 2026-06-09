@@ -125,9 +125,9 @@ async function servePreview(url, env) {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    if (url.pathname === "/") return htmlResponse(request);
-    if (url.pathname === "/feed.ics") {
-      // Same URL serves both: builder page for browsers, calendar data for clients.
+    if (url.pathname === "/" || url.pathname === "/feed.ics") {
+      // The same URL serves both: builder page for browsers, calendar data for
+      // clients. /feed.ics remains as a backward-compatible alias.
       return prefersHtml(request) ? htmlResponse(request) : serveFeed(url, request, env, ctx);
     }
     if (url.pathname === "/api/preview") return servePreview(url, env);

@@ -19,7 +19,7 @@ const req = (path, headers = {}) => new Request("https://worldcup.andrewe.dev" +
 
 describe("worker fetch", () => {
   it("serves the settings UI at /", async () => {
-    const res = await worker.fetch(req("/"), env());
+    const res = await worker.fetch(req("/", { Accept: "text/html" }), env());
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toContain("text/html");
     expect(await res.text()).toContain("World Cup 2026");
@@ -27,8 +27,14 @@ describe("worker fetch", () => {
     expect(res.headers.get("vary")).toBe("Accept-Language");
   });
 
+  it("serves the ICS feed from the same root URL to a calendar client", async () => {
+    const res = await worker.fetch(req("/?teams=USA", { Accept: "text/calendar" }), env());
+    expect(res.headers.get("content-type")).toContain("text/calendar");
+    expect(await res.text()).toContain("UID:wc2026-2@worldcup.andrewe.dev");
+  });
+
   it("uses an explicit URL locale before browser language", async () => {
-    const res = await worker.fetch(req("/?lang=de", { "Accept-Language": "fr" }), env());
+    const res = await worker.fetch(req("/?lang=de", { Accept: "text/html", "Accept-Language": "fr" }), env());
     expect(res.headers.get("content-language")).toBe("de");
     expect(res.headers.get("vary")).toBeNull();
     const body = await res.text();
@@ -37,10 +43,10 @@ describe("worker fetch", () => {
   });
 
   it("detects supported regional browser languages and falls back safely", async () => {
-    const detected = await worker.fetch(req("/", { "Accept-Language": "es-MX,fr;q=0.8" }), env());
+    const detected = await worker.fetch(req("/", { Accept: "text/html", "Accept-Language": "es-MX,fr;q=0.8" }), env());
     expect(detected.headers.get("content-language")).toBe("es");
     expect(await detected.text()).toContain('<html lang="es">');
-    const invalid = await worker.fetch(req("/?lang=invalid", { "Accept-Language": "fr" }), env());
+    const invalid = await worker.fetch(req("/?lang=invalid", { Accept: "text/html", "Accept-Language": "fr" }), env());
     expect(invalid.headers.get("content-language")).toBe("en");
   });
 

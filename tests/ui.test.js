@@ -48,6 +48,8 @@ describe("settings page", () => {
     expect(html).toContain("cb.checked = selectedCodes.has(t.code)");
     expect(html).toContain("toLocaleString(currentLocale");
     expect(html).toContain("m.probabilities.join(', ')");
+    expect(html).toContain("location.origin + '/' + (qs ? '?' + qs : '')");
+    expect(html).not.toContain("location.origin + '/feed.ics'");
     expect(html).toContain("key !== 'lang' && key !== 'flags' && key !== 'code'");
   });
 });
