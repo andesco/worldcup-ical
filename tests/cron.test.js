@@ -50,6 +50,16 @@ describe("handleScheduled", () => {
     await handleScheduled({ scheduledTime: Date.parse("2026-06-11T18:00:00Z") }, env);
     const odds = JSON.parse(env.WC_STORE.store.get("odds"));
     expect(odds["1"].homePct).toBeGreaterThan(odds["1"].awayPct); // Mexico favoured
+    expect(env.WC_STORE.store.has("data_version")).toBe(true);
+  });
+
+  it("does not bump data_version when the data is unchanged", async () => {
+    stubFetch();
+    const env = { WC_STORE: makeKV(), FOOTBALL_DATA_TOKEN: "t", ODDS_API_KEY: "k" };
+    await handleScheduled({ scheduledTime: Date.parse("2026-06-11T18:00:00Z") }, env); // writes + sets version
+    const v1 = env.WC_STORE.store.get("data_version");
+    await handleScheduled({ scheduledTime: Date.parse("2026-06-11T18:30:00Z") }, env); // identical data
+    expect(env.WC_STORE.store.get("data_version")).toBe(v1);
   });
 
   it("keeps last good fixtures cache when the fetch fails", async () => {

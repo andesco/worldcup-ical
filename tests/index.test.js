@@ -13,7 +13,7 @@ const fixtures = [
     venue: { name: "V", city: "C" }, home: { code: "USA", name: "USA" }, away: { code: "CAN", name: "Canada" }, score: null },
 ];
 const env = () => ({
-  WC_STORE: makeKV({ fixtures: JSON.stringify(fixtures), odds: JSON.stringify({}), fixtures_lastupdate: "1000", odds_lastupdate: "1000" }),
+  WC_STORE: makeKV({ fixtures: JSON.stringify(fixtures), odds: JSON.stringify({}), data_version: "1000" }),
 });
 const req = (path, headers = {}) => new Request("https://worldcup.andrewe.dev" + path, { headers });
 

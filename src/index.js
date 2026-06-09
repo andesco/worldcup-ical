@@ -15,18 +15,26 @@ function hashETag(str) {
   return `"${(h >>> 0).toString(16)}"`;
 }
 
-async function readCache(env) {
-  const [fx, odds, fLast, oLast] = await Promise.all([
+// Isolate-level memo of the parsed dataset, keyed by data_version. A warm isolate
+// serving many feeds reuses this instead of re-reading KV + re-parsing 104 fixtures.
+let DATASET = { version: null, fixtures: null, oddsMap: null };
+
+async function dataVersion(env) {
+  return (await env.WC_STORE.get("data_version")) || "0";
+}
+
+async function readDataset(env, version) {
+  if (DATASET.version === version && DATASET.fixtures) return DATASET;
+  const [fx, odds] = await Promise.all([
     env.WC_STORE.get("fixtures"),
     env.WC_STORE.get("odds"),
-    env.WC_STORE.get("fixtures_lastupdate"),
-    env.WC_STORE.get("odds_lastupdate"),
   ]);
-  return {
+  DATASET = {
+    version,
     fixtures: fx ? JSON.parse(fx) : [],
     oddsMap: odds ? JSON.parse(odds) : {},
-    stamp: `${fLast || 0}-${oLast || 0}`,
   };
+  return DATASET;
 }
 
 function configFrom(url) {
@@ -51,28 +59,43 @@ function htmlResponse() {
   });
 }
 
-async function serveFeed(url, request, env) {
-  const { fixtures, oddsMap, stamp } = await readCache(env);
-  const config = configFrom(url);
-  const etag = hashETag(url.search + "|" + stamp);
+async function serveFeed(url, request, env, ctx) {
+  const version = await dataVersion(env);
+  const etag = hashETag(url.search + "|" + version);
 
+  // 1) Cheapest path: 304 with no dataset read or build.
   if (request.headers.get("If-None-Match") === etag) {
     return new Response(null, { status: 304, headers: { ETag: etag } });
   }
 
-  const body = buildFeed(fixtures, oddsMap, config);
-  return new Response(body, {
+  // 2) Edge cache, keyed by URL + data version (so a data change auto-busts).
+  const cache = typeof caches !== "undefined" ? caches.default : null;
+  const cacheKey = cache
+    ? new Request(`${url.origin}${url.pathname}${url.search}${url.search ? "&" : "?"}__v=${version}`)
+    : null;
+  if (cache) {
+    const hit = await cache.match(cacheKey);
+    if (hit) return hit;
+  }
+
+  // 3) Build once per (params × version); reuse the memoized parsed dataset.
+  const { fixtures, oddsMap } = await readDataset(env, version);
+  const body = buildFeed(fixtures, oddsMap, configFrom(url));
+  const response = new Response(body, {
     status: 200,
     headers: {
       "content-type": "text/calendar; charset=utf-8",
       "ETag": etag,
+      "Last-Modified": new Date(Number(version) || 0).toUTCString(),
       "Cache-Control": "public, max-age=1800",
     },
   });
+  if (cache && ctx && ctx.waitUntil) ctx.waitUntil(cache.put(cacheKey, response.clone()));
+  return response;
 }
 
 async function servePreview(url, env) {
-  const { fixtures, oddsMap } = await readCache(env);
+  const { fixtures, oddsMap } = await readDataset(env, await dataVersion(env));
   const config = configFrom(url);
   const opts = { flags: config.flags, code: config.code };
   const now = Date.now();
@@ -89,12 +112,12 @@ async function servePreview(url, env) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.pathname === "/") return htmlResponse();
     if (url.pathname === "/feed.ics") {
       // Same URL serves both: builder page for browsers, calendar data for clients.
-      return prefersHtml(request) ? htmlResponse() : serveFeed(url, request, env);
+      return prefersHtml(request) ? htmlResponse() : serveFeed(url, request, env, ctx);
     }
     if (url.pathname === "/api/preview") return servePreview(url, env);
     return new Response("Not found", { status: 404 });

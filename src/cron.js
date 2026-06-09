@@ -23,13 +23,18 @@ export function joinOdds(fixtures, oddsList) {
 
 export async function handleScheduled(event, env) {
   const now = new Date(event.scheduledTime);
+  let changed = false;
 
-  // Fixtures every run; keep last good cache on failure.
+  // Fixtures every run; only write (and bump the version) when the data actually
+  // changed, so identical pulls don't bust the edge cache. Keep last good cache on failure.
   let fixtures = null;
   try {
     fixtures = await fetchFixtures(env);
-    await env.WC_STORE.put("fixtures", JSON.stringify(fixtures));
-    await env.WC_STORE.put("fixtures_lastupdate", String(now.getTime()));
+    const json = JSON.stringify(fixtures);
+    if (json !== (await env.WC_STORE.get("fixtures"))) {
+      await env.WC_STORE.put("fixtures", json);
+      changed = true;
+    }
   } catch (err) {
     console.error("fixtures pull failed:", err.message);
     const cached = await env.WC_STORE.get("fixtures");
@@ -39,13 +44,18 @@ export async function handleScheduled(event, env) {
   // Odds only at the top of the hour (the-odds-api refreshes ~hourly anyway).
   if (now.getUTCMinutes() === 0 && fixtures) {
     try {
-      const oddsList = await fetchOdds(env);
-      const oddsMap = joinOdds(fixtures, oddsList);
-      await env.WC_STORE.put("odds", JSON.stringify(oddsMap));
-      await env.WC_STORE.put("odds_lastupdate", String(now.getTime()));
+      const oddsMap = joinOdds(fixtures, await fetchOdds(env));
+      const json = JSON.stringify(oddsMap);
+      if (json !== (await env.WC_STORE.get("odds"))) {
+        await env.WC_STORE.put("odds", json);
+        changed = true;
+      }
     } catch (err) {
       console.error("odds pull failed:", err.message);
       // keep last good odds cache
     }
   }
+
+  // A single version stamp the feed handler keys ETag + edge cache on.
+  if (changed) await env.WC_STORE.put("data_version", String(now.getTime()));
 }
