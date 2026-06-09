@@ -218,7 +218,7 @@ export function renderSettingsPage() {
           var when = new Date(m.utcKickoff).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
           var home = m.home ? m.home.name : 'TBD';
           var away = m.away ? m.away.name : 'TBD';
-          li.innerHTML = when + ' — ' + home + ' vs ' + away +
+          li.innerHTML = when + ' — ' + home + ' vs. ' + away +
             ' <span class="reasons">· ' + m.reasons.join(', ') + '</span>';
           ul.appendChild(li);
         });

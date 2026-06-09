@@ -27,12 +27,12 @@ describe("ics", () => {
   });
 
   it("builds a flags-only summary with stage suffix", () => {
-    expect(matchSummary(fx())).toBe("🇪🇸 Spain vs 🇫🇷 France — Group Stage - 1");
+    expect(matchSummary(fx())).toBe("🇪🇸 Spain vs. 🇫🇷 France — Group Stage - 1");
   });
 
   it("renders TBD for null teams in the summary", () => {
     const tbd = { ...fx(), home: null, away: null };
-    expect(matchSummary(tbd)).toBe("TBD vs TBD — Group Stage - 1");
+    expect(matchSummary(tbd)).toBe("TBD vs. TBD — Group Stage - 1");
   });
 
   it("builds a VEVENT with stable UID, 2h end, location, reasons", () => {

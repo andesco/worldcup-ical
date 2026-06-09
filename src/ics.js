@@ -34,7 +34,7 @@ export function matchSummary(fixture) {
   const { home, away, stage } = fixture;
   const hn = home ? `${flagFor(home.code)} ${home.name}` : "TBD";
   const an = away ? `${flagFor(away.code)} ${away.name}` : "TBD";
-  return `${hn} vs ${an} — ${stage}`;
+  return `${hn} vs. ${an} — ${stage}`;
 }
 
 // SEQUENCE increases monotonically as a fixture firms up: TBD=0, scheduled=1, finished=2.
