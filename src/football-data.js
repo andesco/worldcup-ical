@@ -28,8 +28,10 @@ function team(apiTeam) {
   return code ? { code, name: nameFor(code) } : null; // null = TBD knockout slot
 }
 
+const HOSTS = ["CAN", "MEX", "USA"];
+
 export function normalizeFixtures(json) {
-  return (json.matches || []).map((m) => {
+  const fixtures = (json.matches || []).map((m) => {
     const finished = m.status === "FINISHED";
     const ft = (m.score && m.score.fullTime) || {};
     return {
@@ -39,12 +41,22 @@ export function normalizeFixtures(json) {
       finished,
       stage: stageLabel(m.stage, m.group),
       knockout: m.stage !== "GROUP_STAGE", // R32 through Final (32 games)
+      hostOpener: false, // set below
       venue: null, // football-data free tier does not expose venue
       home: team(m.homeTeam),
       away: team(m.awayTeam),
       score: finished && ft.home != null ? { home: ft.home, away: ft.away } : null,
     };
   });
+
+  // Each host nation's first home match = their home opener (3 games total).
+  for (const host of HOSTS) {
+    const opener = fixtures
+      .filter((f) => f.home && f.home.code === host)
+      .sort((a, b) => Date.parse(a.utcKickoff) - Date.parse(b.utcKickoff))[0];
+    if (opener) opener.hostOpener = true;
+  }
+  return fixtures;
 }
 
 export async function fetchFixtures(env) {

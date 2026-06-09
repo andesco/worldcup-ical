@@ -15,7 +15,8 @@ export function parseFeedParams(searchParams) {
   const rank = posInt(searchParams.get("rank"));
   const competitive = posInt(searchParams.get("competitive"));
   const knockout = searchParams.has("knockout");
+  const hostOpeners = searchParams.has("openers");
   const hasAnyRule =
-    teams.size > 0 || rank !== null || competitive !== null || knockout;
-  return { teams, rank, competitive, knockout, hasAnyRule };
+    teams.size > 0 || rank !== null || competitive !== null || knockout || hostOpeners;
+  return { teams, rank, competitive, knockout, hostOpeners, hasAnyRule };
 }

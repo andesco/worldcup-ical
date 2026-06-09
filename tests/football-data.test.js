@@ -52,6 +52,21 @@ describe("football-data client", () => {
     expect(fx[2].knockout).toBe(true);  // SEMI_FINALS
   });
 
+  it("flags each host nation's earliest home match as a host opener", () => {
+    const fx = normalizeFixtures({ matches: [
+      { id: 10, utcDate: "2026-06-11T19:00:00Z", status: "TIMED", stage: "GROUP_STAGE", group: "GROUP_A",
+        homeTeam: { name: "Mexico" }, awayTeam: { name: "South Africa" }, score: { fullTime: {} } },
+      { id: 11, utcDate: "2026-06-18T22:00:00Z", status: "TIMED", stage: "GROUP_STAGE", group: "GROUP_A",
+        homeTeam: { name: "Mexico" }, awayTeam: { name: "Norway" }, score: { fullTime: {} } },
+      { id: 12, utcDate: "2026-06-13T01:00:00Z", status: "TIMED", stage: "GROUP_STAGE", group: "GROUP_D",
+        homeTeam: { name: "United States" }, awayTeam: { name: "Paraguay" }, score: { fullTime: {} } },
+    ]});
+    const byId = Object.fromEntries(fx.map((f) => [f.id, f]));
+    expect(byId[10].hostOpener).toBe(true);  // Mexico's first home game
+    expect(byId[11].hostOpener).toBe(false); // Mexico's second home game
+    expect(byId[12].hostOpener).toBe(true);  // USA's first home game
+  });
+
   it("sends the X-Auth-Token header to the WC season endpoint", async () => {
     const spy = vi.fn(async () => ({ ok: true, json: async () => ({ matches: [] }) }));
     vi.stubGlobal("fetch", spy);

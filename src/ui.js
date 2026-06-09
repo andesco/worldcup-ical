@@ -123,6 +123,14 @@ export function renderSettingsPage() {
           </span>
           by odds of winning the tournament
         </label>
+        <label class="rule-row">
+          <input type="checkbox" id="knockout-on">
+          all 32 knockout games
+        </label>
+        <label class="rule-row">
+          <input type="checkbox" id="openers-on">
+          home openers of the 3 host nations
+        </label>
       </fieldset>
 
       <fieldset>
@@ -138,14 +146,6 @@ export function renderSettingsPage() {
             </span>
           </span>
           percentage points
-        </label>
-      </fieldset>
-
-      <fieldset>
-        <legend>Knockout games</legend>
-        <label class="rule-row">
-          <input type="checkbox" id="knockout-on">
-          all 32 knockout games
         </label>
       </fieldset>
 
@@ -194,6 +194,7 @@ export function renderSettingsPage() {
       if (document.getElementById('bigGame-on').checked) p.set('rank', document.getElementById('rank').value);
       if (document.getElementById('competitiveGame-on').checked) p.set('competitive', document.getElementById('competitive').value);
       if (document.getElementById('knockout-on').checked) p.set('knockout', '1');
+      if (document.getElementById('openers-on').checked) p.set('openers', '1');
       return p;
     }
 
@@ -255,17 +256,27 @@ export function renderSettingsPage() {
 
     (function prefill() {
       var sp = new URLSearchParams(location.search);
-      // Default to the three host nations on a fresh visit (no teams param).
+      // A "fresh" visit has no query at all -> apply sensible defaults.
+      // A URL with any params is an explicit config and is honoured exactly.
+      var fresh = Array.from(sp.keys()).length === 0;
+
       var teamCodes = sp.has('teams')
         ? (sp.get('teams') || '').split(',').filter(Boolean)
-        : ['CAN', 'MEX', 'USA'];
+        : (fresh ? ['CAN', 'MEX', 'USA'] : []);
       teamCodes.forEach(function (code) {
         var cb = document.getElementById('t-' + code.toUpperCase());
         if (cb) cb.checked = true;
       });
+
       if (sp.get('rank')) { document.getElementById('bigGame-on').checked = true; document.getElementById('rank').value = sp.get('rank'); }
+      else if (fresh) { document.getElementById('bigGame-on').checked = true; }
+
       if (sp.get('competitive')) { document.getElementById('competitiveGame-on').checked = true; document.getElementById('competitive').value = sp.get('competitive'); }
-      if (sp.has('knockout')) { document.getElementById('knockout-on').checked = true; }
+      else if (fresh) { document.getElementById('competitiveGame-on').checked = true; }
+
+      if (sp.has('knockout') || fresh) { document.getElementById('knockout-on').checked = true; }
+      if (sp.has('openers')) { document.getElementById('openers-on').checked = true; }
+
       update();
     })();
   </script>

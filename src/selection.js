@@ -15,6 +15,10 @@ export function evaluateMatch(fixture, odds, config) {
     reasons.push("knockout game");
   }
 
+  if (config.hostOpeners && fixture.hostOpener) {
+    reasons.push("host opener");
+  }
+
   if (haveTeams && config.teams.size > 0 &&
       (config.teams.has(home.code) || config.teams.has(away.code))) {
     reasons.push("favourite team");

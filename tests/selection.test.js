@@ -47,6 +47,14 @@ describe("evaluateMatch", () => {
     expect(evaluateMatch(fx({ knockout: false }), null, cfg({ knockout: true })).included).toBe(false);
   });
 
+  it("host-openers rule includes only flagged host openers", () => {
+    const opener = fx({ hostOpener: true });
+    const r = evaluateMatch(opener, null, cfg({ hostOpeners: true }));
+    expect(r.included).toBe(true);
+    expect(r.reasons).toContain("host opener");
+    expect(evaluateMatch(fx({ hostOpener: false }), null, cfg({ hostOpeners: true })).included).toBe(false);
+  });
+
   it("collects multiple reasons and de-dupes inclusion", () => {
     const both = fx({ away: { code: "FRA", name: "France" } });
     const r = evaluateMatch(both, { homePct: 41, drawPct: 22, awayPct: 37 },

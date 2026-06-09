@@ -35,4 +35,10 @@ describe("parseFeedParams", () => {
     expect(cfg("?knockout=1").hasAnyRule).toBe(true);
     expect(cfg("?teams=ESP").knockout).toBe(false);
   });
+
+  it("treats the host-openers flag as a boolean rule", () => {
+    expect(cfg("?openers=1").hostOpeners).toBe(true);
+    expect(cfg("?openers=1").hasAnyRule).toBe(true);
+    expect(cfg("?teams=ESP").hostOpeners).toBe(false);
+  });
 });
