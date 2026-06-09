@@ -47,7 +47,7 @@ describe("settings page", () => {
     expect(html).toContain("selectedCodes.add(c.value)");
     expect(html).toContain("cb.checked = selectedCodes.has(t.code)");
     expect(html).toContain("toLocaleString(currentLocale");
-    expect(html).toContain("m.probabilities.join('\\n')");
+    expect(html).toContain("m.probabilities.join(', ')");
     expect(html).toContain("key !== 'lang' && key !== 'flags' && key !== 'code'");
   });
 });

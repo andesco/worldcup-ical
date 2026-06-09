@@ -295,8 +295,7 @@ export function renderSettingsPage(locale = "en") {
           if (m.probabilities && m.probabilities.length) {
             var probabilities = document.createElement('small');
             probabilities.className = 'probabilities';
-            probabilities.textContent = m.probabilities.join('\\n');
-            probabilities.style.whiteSpace = 'pre-line';
+            probabilities.textContent = m.probabilities.join(', ');
             li.appendChild(probabilities);
           }
           ul.appendChild(li);
