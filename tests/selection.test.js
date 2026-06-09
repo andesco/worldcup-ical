@@ -13,7 +13,7 @@ describe("evaluateMatch", () => {
   it("includes a match with a favourite team", () => {
     const r = evaluateMatch(fx(), null, cfg({ teams: new Set(["NOR"]) }));
     expect(r.included).toBe(true);
-    expect(r.reasons).toContain("favourite team");
+    expect(r.reasons).toContainEqual({ id: "favourite" });
   });
 
   it("big-game needs BOTH teams in top-X", () => {
@@ -21,7 +21,7 @@ describe("evaluateMatch", () => {
     const both = fx({ away: { code: "FRA", name: "France" } });
     const r = evaluateMatch(both, null, cfg({ rank: 8 }));
     expect(r.included).toBe(true);
-    expect(r.reasons).toContain("big game");
+    expect(r.reasons).toContainEqual({ id: "bigGame" });
   });
 
   it("competitive-game fires only when odds exist and gap within threshold", () => {
@@ -30,7 +30,7 @@ describe("evaluateMatch", () => {
     const tight = { homePct: 40, drawPct: 24, awayPct: 36 };
     const r = evaluateMatch(fx(), tight, cfg({ competitive: 10 }));
     expect(r.included).toBe(true);
-    expect(r.reasons).toContain("competitive game (40% / 36%, draw 24%)");
+    expect(r.reasons).toContainEqual({ id: "competitive", values: { home: 40, away: 36, draw: 24 } });
   });
 
   it("ignores team-based rules for fixtures with TBD teams", () => {
@@ -42,7 +42,7 @@ describe("evaluateMatch", () => {
     const tbdKO = fx({ home: null, away: null, knockout: true, stage: "Round of 32" });
     const r = evaluateMatch(tbdKO, null, cfg({ knockout: true }));
     expect(r.included).toBe(true);
-    expect(r.reasons).toContain("knockout game");
+    expect(r.reasons).toContainEqual({ id: "knockout" });
     // a group-stage game is not a knockout game
     expect(evaluateMatch(fx({ knockout: false }), null, cfg({ knockout: true })).included).toBe(false);
   });
@@ -51,7 +51,7 @@ describe("evaluateMatch", () => {
     const opener = fx({ hostOpener: true });
     const r = evaluateMatch(opener, null, cfg({ hostOpeners: true }));
     expect(r.included).toBe(true);
-    expect(r.reasons).toContain("host opener");
+    expect(r.reasons).toContainEqual({ id: "hostOpener" });
     expect(evaluateMatch(fx({ hostOpener: false }), null, cfg({ hostOpeners: true })).included).toBe(false);
   });
 
@@ -61,7 +61,9 @@ describe("evaluateMatch", () => {
       cfg({ teams: new Set(["ESP"]), rank: 8, competitive: 10 }));
     expect(r.included).toBe(true);
     expect(r.reasons).toEqual([
-      "favourite team", "big game", "competitive game (41% / 37%, draw 22%)",
+      { id: "favourite" },
+      { id: "bigGame" },
+      { id: "competitive", values: { home: 41, away: 37, draw: 22 } },
     ]);
   });
 });

@@ -1,5 +1,6 @@
 // src/ics.js
 import { flagFor } from "./flags.js";
+import { catalog, probabilityLines, reasonLabel, stageName, teamName } from "./localization.js";
 
 export function icsDate(iso) {
   // "2026-06-11T20:00:00Z" or "...T20:00:00.000Z" -> "20260611T200000Z"
@@ -35,7 +36,7 @@ export function foldLine(line) {
 // when the team is undecided, or null when there's no slot either.
 function sideLabel(team, slot, side, opts) {
   if (team) {
-    const label = opts.code ? team.code : team.name;
+    const label = opts.code ? team.code : teamName(team.code, opts.lang, team.name);
     if (!opts.flags) return label;
     const f = flagFor(team.code);
     return side === "home" ? `${f} ${label}` : `${label} ${f}`;
@@ -45,17 +46,18 @@ function sideLabel(team, slot, side, opts) {
 
 // opts: { flags (default true), code (default false: full name vs FIFA 3-letter) }
 export function matchSummary(fixture, opts = {}) {
-  const o = { flags: true, code: false, ...opts };
+  const o = { flags: true, code: false, lang: "en", ...opts };
+  const c = catalog(o.lang);
   const { home, away, stage } = fixture;
   const h = sideLabel(home, fixture.slotHome, "home", o);
   const a = sideLabel(away, fixture.slotAway, "away", o);
   if (!fixture.knockout) {
-    return `${h || "TBD"} vs. ${a || "TBD"} — ${stage}`;
+    return `${h || c.feed.tbd} ${c.feed.versus} ${a || c.feed.tbd} — ${stageName(stage, o.lang)}`;
   }
   // Knockout: never append the round as a suffix. R32 shows slot codes; later
   // rounds with undecided teams fall back to just the round name.
-  if (h && a) return `${h} vs. ${a}`;
-  return stage;
+  if (h && a) return `${h} ${c.feed.versus} ${a}`;
+  return stageName(stage, o.lang);
 }
 
 // SEQUENCE increases monotonically as a fixture firms up: TBD=0, scheduled=1, finished=2.
@@ -64,16 +66,25 @@ function sequenceFor(fixture) {
   return fixture.home && fixture.away ? 1 : 0;
 }
 
-function descriptionFor(fixture, odds, reasons) {
-  const lines = [`Included: ${reasons.join("; ")}`];
-  if (odds) lines.push(`Win probability: ${fixture.home.name} ${odds.homePct}% / Draw ${odds.drawPct}% / ${fixture.away.name} ${odds.awayPct}%`);
+function descriptionFor(fixture, odds, reasons, opts) {
+  const c = catalog(opts.lang);
+  const lines = [`${c.feed.included}: ${reasons.map((reason) => reasonLabel(reason, opts.lang)).join("; ")}`];
+  const home = fixture.home && teamName(fixture.home.code, opts.lang, fixture.home.name);
+  const away = fixture.away && teamName(fixture.away.code, opts.lang, fixture.away.name);
+  lines.push(...probabilityLines(fixture, odds, opts.lang));
   if (fixture.finished && fixture.score) {
-    lines.push(`Final: ${fixture.home.name} ${fixture.score.home}-${fixture.score.away} ${fixture.away.name}`);
+    lines.push(`${c.feed.final}: ${home} ${fixture.score.home}-${fixture.score.away} ${away}`);
   }
   return lines.join("\n");
 }
 
-export function buildVEvent({ fixture, odds, reasons, opts }) {
+function textProperty(name, value, lang) {
+  const language = lang && lang !== "en" ? `;LANGUAGE=${lang}` : "";
+  return foldLine(`${name}${language}:${escapeText(value)}`);
+}
+
+export function buildVEvent({ fixture, odds, reasons, opts = {} }) {
+  const o = { flags: true, code: false, lang: "en", ...opts };
   const start = icsDate(fixture.utcKickoff);
   const end = icsDate(new Date(Date.parse(fixture.utcKickoff) + 2 * 3600 * 1000).toISOString());
   const lines = [
@@ -83,7 +94,7 @@ export function buildVEvent({ fixture, odds, reasons, opts }) {
     `DTSTART:${start}`,
     `DTEND:${end}`,
     `SEQUENCE:${sequenceFor(fixture)}`,
-    foldLine(`SUMMARY:${escapeText(matchSummary(fixture, opts))}`),
+    textProperty("SUMMARY", matchSummary(fixture, o), o.lang),
   ];
   if (fixture.venue && fixture.venue.name) {
     const loc = fixture.venue.city
@@ -91,19 +102,20 @@ export function buildVEvent({ fixture, odds, reasons, opts }) {
       : fixture.venue.name;
     lines.push(foldLine(`LOCATION:${escapeText(loc)}`));
   }
-  lines.push(foldLine(`DESCRIPTION:${escapeText(descriptionFor(fixture, odds, reasons))}`));
+  lines.push(textProperty("DESCRIPTION", descriptionFor(fixture, odds, reasons, o), o.lang));
   lines.push("END:VEVENT");
   return lines.join("\r\n");
 }
 
-export function buildCalendar(vevents) {
+export function buildCalendar(vevents, opts = {}) {
+  const lang = opts.lang || "en";
   const head = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     "PRODID:-//andrewe//worldcup-ical//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
-    "X-WR-CALNAME:World Cup 2026",
+    textProperty("X-WR-CALNAME", catalog(lang).feed.calendarName, lang),
   ];
   return [...head, ...vevents, "END:VCALENDAR"].join("\r\n") + "\r\n";
 }

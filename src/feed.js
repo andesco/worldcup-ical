@@ -14,7 +14,7 @@ export function selectMatches(fixtures, oddsMap, config) {
 
 export function buildFeed(fixtures, oddsMap, config) {
   const selected = selectMatches(fixtures, oddsMap, config);
-  const opts = { flags: config.flags, code: config.code };
+  const opts = { flags: config.flags, code: config.code, lang: config.lang };
   const events = selected.map((s) => buildVEvent({ ...s, opts }));
-  return buildCalendar(events);
+  return buildCalendar(events, opts);
 }

@@ -1,4 +1,6 @@
 // src/params.js
+import { resolveLocale } from "./localization.js";
+
 function posInt(raw) {
   if (raw == null) return null;
   const n = Number(raw);
@@ -21,5 +23,6 @@ export function parseFeedParams(searchParams) {
   // Display options (not selection rules): flags on by default, FIFA code off.
   const flags = searchParams.get("flags") !== "0";
   const code = searchParams.get("code") === "1";
-  return { teams, rank, competitive, knockout, hostOpeners, flags, code, hasAnyRule };
+  const lang = resolveLocale(searchParams.get("lang")) || "en";
+  return { teams, rank, competitive, knockout, hostOpeners, flags, code, lang, hasAnyRule };
 }

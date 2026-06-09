@@ -60,26 +60,48 @@ describe("ics", () => {
   });
 
   it("builds a VEVENT with stable UID, 2h end, location, reasons", () => {
-    const ev = buildVEvent({ fixture: fx(), odds: { homePct: 41, drawPct: 22, awayPct: 37 }, reasons: ["big game", "competitive game (41% / 37%)"] });
+    const ev = buildVEvent({ fixture: fx(), odds: { homePct: 41, drawPct: 22, awayPct: 37 }, reasons: [{ id: "bigGame" }, { id: "competitive", values: { home: 41, away: 37, draw: 22 } }] });
     expect(ev).toContain("UID:wc2026-42@worldcup.andrewe.dev");
     expect(ev).toContain("DTSTART:20260611T200000Z");
     expect(ev).toContain("DTEND:20260611T220000Z");
     expect(ev).toContain("LOCATION:SoFi Stadium\\, Inglewood");
-    expect(ev).toContain("Included: big game\\; competitive game (41% / 37%)");
+    const unfolded = ev.replace(/\r\n /g, "");
+    expect(unfolded).toContain("Included: big game\\; competitive game");
+    expect(unfolded).toContain("Spain: 41%\\nFrance: 37%\\ndraw: 22%");
     expect(ev).toContain("SEQUENCE:1");
   });
 
   it("includes the final score once finished", () => {
-    const ev = buildVEvent({ fixture: fx({ finished: true, status: "FT", score: { home: 2, away: 1 } }), odds: null, reasons: ["favourite team"] });
+    const ev = buildVEvent({ fixture: fx({ finished: true, status: "FT", score: { home: 2, away: 1 } }), odds: null, reasons: [{ id: "favourite" }] });
     expect(ev).toContain("Final: Spain 2-1 France");
     expect(ev).toContain("SEQUENCE:2");
   });
 
   it("wraps events in a VCALENDAR", () => {
-    const cal = buildCalendar([buildVEvent({ fixture: fx(), odds: null, reasons: ["favourite team"] })]);
+    const cal = buildCalendar([buildVEvent({ fixture: fx(), odds: null, reasons: [{ id: "favourite" }] })]);
     expect(cal.startsWith("BEGIN:VCALENDAR\r\n")).toBe(true);
     expect(cal.trimEnd().endsWith("END:VCALENDAR")).toBe(true);
     expect(cal).toContain("PRODID:-//andrewe//worldcup-ical//EN");
     expect(cal).toContain("X-WR-CALNAME:World Cup 2026");
+  });
+
+  it("localizes summaries, descriptions, stages, names, and language parameters", () => {
+    const ev = buildVEvent({
+      fixture: fx(),
+      odds: { homePct: 41, drawPct: 22, awayPct: 37 },
+      reasons: [{ id: "bigGame" }],
+      opts: { flags: false, lang: "es" },
+    });
+    expect(ev).toContain("SUMMARY;LANGUAGE=es:España vs. Francia — Fase de grupos - 1");
+    expect(ev).toContain("DESCRIPTION;LANGUAGE=es:Incluido: gran partido");
+    expect(ev.replace(/\r\n /g, "")).toContain("España: 41%\\nFrancia: 37%\\nempate: 22%");
+    expect(ev).not.toContain("LOCATION;LANGUAGE=");
+  });
+
+  it("keeps UIDs stable across languages and localizes calendar names", () => {
+    const en = buildVEvent({ fixture: fx(), odds: null, reasons: [{ id: "favourite" }], opts: { lang: "en" } });
+    const de = buildVEvent({ fixture: fx(), odds: null, reasons: [{ id: "favourite" }], opts: { lang: "de" } });
+    expect(en.match(/UID:.+/)[0]).toBe(de.match(/UID:.+/)[0]);
+    expect(buildCalendar([de], { lang: "de" })).toContain("X-WR-CALNAME;LANGUAGE=de:Fußball-WM 2026");
   });
 });

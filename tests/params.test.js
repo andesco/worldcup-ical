@@ -41,4 +41,11 @@ describe("parseFeedParams", () => {
     expect(cfg("?openers=1").hasAnyRule).toBe(true);
     expect(cfg("?teams=ESP").hostOpeners).toBe(false);
   });
+
+  it("parses lang as a display option with a safe English fallback", () => {
+    expect(cfg("?lang=pt-BR").lang).toBe("pt-BR");
+    expect(cfg("?lang=es-MX").lang).toBe("es");
+    expect(cfg("?lang=invalid").lang).toBe("en");
+    expect(cfg("?lang=fr").hasAnyRule).toBe(false);
+  });
 });

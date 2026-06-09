@@ -4,6 +4,7 @@ import { buildFeed, selectMatches } from "./feed.js";
 import { matchSummary } from "./ics.js";
 import { handleScheduled } from "./cron.js";
 import { renderSettingsPage } from "./ui.js";
+import { probabilityLines, reasonLabel, requestLocale } from "./localization.js";
 
 function hashETag(str) {
   // FNV-1a 32-bit -> hex, wrapped in quotes per HTTP ETag syntax.
@@ -53,9 +54,16 @@ function prefersHtml(request) {
   return accept.includes("text/html");
 }
 
-function htmlResponse() {
-  return new Response(renderSettingsPage(), {
-    headers: { "content-type": "text/html; charset=utf-8" },
+function htmlResponse(request) {
+  const url = new URL(request.url);
+  const locale = requestLocale(url, request.headers.get("Accept-Language") || "");
+  const headers = {
+    "content-type": "text/html; charset=utf-8",
+    "Content-Language": locale,
+  };
+  if (!url.searchParams.has("lang")) headers.Vary = "Accept-Language";
+  return new Response(renderSettingsPage(locale), {
+    headers,
   });
 }
 
@@ -80,11 +88,13 @@ async function serveFeed(url, request, env, ctx) {
 
   // 3) Build once per (params × version); reuse the memoized parsed dataset.
   const { fixtures, oddsMap } = await readDataset(env, version);
-  const body = buildFeed(fixtures, oddsMap, configFrom(url));
+  const config = configFrom(url);
+  const body = buildFeed(fixtures, oddsMap, config);
   const response = new Response(body, {
     status: 200,
     headers: {
       "content-type": "text/calendar; charset=utf-8",
+      "Content-Language": config.lang,
       "ETag": etag,
       "Last-Modified": new Date(Number(version) || 0).toUTCString(),
       "Cache-Control": "public, max-age=1800",
@@ -97,7 +107,7 @@ async function serveFeed(url, request, env, ctx) {
 async function servePreview(url, env) {
   const { fixtures, oddsMap } = await readDataset(env, await dataVersion(env));
   const config = configFrom(url);
-  const opts = { flags: config.flags, code: config.code };
+  const opts = { flags: config.flags, code: config.code, lang: config.lang };
   const now = Date.now();
   const matches = selectMatches(fixtures, oddsMap, config)
     .filter((s) => Date.parse(s.fixture.utcKickoff) >= now)
@@ -106,18 +116,19 @@ async function servePreview(url, env) {
       id: s.fixture.id,
       utcKickoff: s.fixture.utcKickoff,
       summary: matchSummary(s.fixture, opts),
-      reasons: s.reasons,
+      reasons: s.reasons.map((reason) => reasonLabel(reason, config.lang)),
+      probabilities: probabilityLines(s.fixture, s.odds, config.lang),
     }));
-  return Response.json({ matches });
+  return Response.json({ matches }, { headers: { "Content-Language": config.lang } });
 }
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    if (url.pathname === "/") return htmlResponse();
+    if (url.pathname === "/") return htmlResponse(request);
     if (url.pathname === "/feed.ics") {
       // Same URL serves both: builder page for browsers, calendar data for clients.
-      return prefersHtml(request) ? htmlResponse() : serveFeed(url, request, env, ctx);
+      return prefersHtml(request) ? htmlResponse(request) : serveFeed(url, request, env, ctx);
     }
     if (url.pathname === "/api/preview") return servePreview(url, env);
     return new Response("Not found", { status: 404 });

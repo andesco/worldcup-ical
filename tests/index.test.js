@@ -12,8 +12,8 @@ const fixtures = [
   { id: 2, utcKickoff: "2026-06-12T20:00:00Z", status: "NS", finished: false, stage: "Group Stage - 1",
     venue: { name: "V", city: "C" }, home: { code: "USA", name: "USA" }, away: { code: "CAN", name: "Canada" }, score: null },
 ];
-const env = () => ({
-  WC_STORE: makeKV({ fixtures: JSON.stringify(fixtures), odds: JSON.stringify({}), data_version: "1000" }),
+const env = (odds = {}, version = "1000") => ({
+  WC_STORE: makeKV({ fixtures: JSON.stringify(fixtures), odds: JSON.stringify(odds), data_version: version }),
 });
 const req = (path, headers = {}) => new Request("https://worldcup.andrewe.dev" + path, { headers });
 
@@ -23,6 +23,25 @@ describe("worker fetch", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toContain("text/html");
     expect(await res.text()).toContain("World Cup 2026");
+    expect(res.headers.get("content-language")).toBe("en");
+    expect(res.headers.get("vary")).toBe("Accept-Language");
+  });
+
+  it("uses an explicit URL locale before browser language", async () => {
+    const res = await worker.fetch(req("/?lang=de", { "Accept-Language": "fr" }), env());
+    expect(res.headers.get("content-language")).toBe("de");
+    expect(res.headers.get("vary")).toBeNull();
+    const body = await res.text();
+    expect(body).toContain('<html lang="de">');
+    expect(body).toContain("Benutzerdefiniertes Kalenderabonnement");
+  });
+
+  it("detects supported regional browser languages and falls back safely", async () => {
+    const detected = await worker.fetch(req("/", { "Accept-Language": "es-MX,fr;q=0.8" }), env());
+    expect(detected.headers.get("content-language")).toBe("es");
+    expect(await detected.text()).toContain('<html lang="es">');
+    const invalid = await worker.fetch(req("/?lang=invalid", { "Accept-Language": "fr" }), env());
+    expect(invalid.headers.get("content-language")).toBe("en");
   });
 
   it("serves a filtered ICS feed with correct content type", async () => {
@@ -68,11 +87,49 @@ describe("worker fetch", () => {
     expect(a).not.toBe(b);
   });
 
+  it("gives localized feeds distinct ETags while keeping event UIDs stable", async () => {
+    const e = env();
+    const en = await worker.fetch(req("/feed.ics?teams=USA"), e);
+    const es = await worker.fetch(req("/feed.ics?teams=USA&lang=es"), e);
+    expect(en.headers.get("etag")).not.toBe(es.headers.get("etag"));
+    expect(es.headers.get("content-language")).toBe("es");
+    const enBody = await en.text();
+    const esBody = await es.text();
+    expect(enBody.match(/UID:.+/)[0]).toBe(esBody.match(/UID:.+/)[0]);
+    expect(esBody).toContain("SUMMARY;LANGUAGE=es:");
+    expect(esBody).toContain("Estados Unidos");
+  });
+
+  it("keeps feeds without lang deterministically English", async () => {
+    const res = await worker.fetch(req("/feed.ics?teams=USA", { "Accept-Language": "es" }), env());
+    const body = await res.text();
+    expect(body).toContain("United States");
+    expect(body).not.toContain("LANGUAGE=es");
+  });
+
   it("returns preview JSON of qualifying upcoming matches", async () => {
     const res = await worker.fetch(req("/api/preview?teams=USA"), env());
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.matches[0]).toMatchObject({ id: 2, reasons: ["favourite team"] });
+  });
+
+  it("returns localized preview summaries and reason labels", async () => {
+    const res = await worker.fetch(req("/api/preview?teams=USA&lang=es&flags=0"), env());
+    expect(res.headers.get("content-language")).toBe("es");
+    const data = await res.json();
+    expect(data.matches[0].summary).toContain("Estados Unidos");
+    expect(data.matches[0].summary).toContain("Canadá");
+    expect(data.matches[0].reasons).toEqual(["equipo favorito"]);
+    expect(data.matches[0].probabilities).toEqual([]);
+  });
+
+  it("returns localized preview probabilities on separate lines", async () => {
+    const odds = { "1": { homePct: 40, awayPct: 29, drawPct: 31 } };
+    const res = await worker.fetch(req("/api/preview?competitive=20&lang=es&flags=0"), env(odds, "1001"));
+    const data = await res.json();
+    expect(data.matches[0].reasons).toEqual(["partido competitivo"]);
+    expect(data.matches[0].probabilities).toEqual(["España: 40%", "Francia: 29%", "empate: 31%"]);
   });
 
   it("404s unknown routes", async () => {

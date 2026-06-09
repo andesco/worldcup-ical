@@ -15,7 +15,7 @@ describe("feed", () => {
     const ids = sel.map((s) => s.fixture.id).sort();
     expect(ids).toEqual([1, 2]);
     const one = sel.find((s) => s.fixture.id === 1);
-    expect(one.reasons).toContain("big game");
+    expect(one.reasons).toContainEqual({ id: "bigGame" });
   });
 
   it("builds a full ICS calendar of the selection", () => {

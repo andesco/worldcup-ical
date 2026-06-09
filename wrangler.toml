@@ -9,4 +9,4 @@ crons = [ "*/30 14-23,0-7 * * *" ]
 
 [[kv_namespaces]]
 binding = "WC_STORE"
-id = "PLACEHOLDER_REPLACE_IN_TASK_12"
+id = "e9467a3032784773be920341757bcd73"

@@ -12,26 +12,29 @@ export function evaluateMatch(fixture, odds, config) {
   // Knockout rule includes every knockout fixture, even before its teams are
   // decided (so all 32 slots land on the calendar).
   if (config.knockout && fixture.knockout) {
-    reasons.push("knockout game");
+    reasons.push({ id: "knockout" });
   }
 
   if (config.hostOpeners && fixture.hostOpener) {
-    reasons.push("host opener");
+    reasons.push({ id: "hostOpener" });
   }
 
   if (haveTeams && config.teams.size > 0 &&
       (config.teams.has(home.code) || config.teams.has(away.code))) {
-    reasons.push("favourite team");
+    reasons.push({ id: "favourite" });
   }
 
   if (haveTeams && config.rank != null &&
       inTopX(home.code, config.rank) && inTopX(away.code, config.rank)) {
-    reasons.push("big game");
+    reasons.push({ id: "bigGame" });
   }
 
   if (haveTeams && config.competitive != null && odds) {
     if (competitiveGap(odds) <= config.competitive) {
-      reasons.push(`competitive game (${odds.homePct}% / ${odds.awayPct}%, draw ${odds.drawPct}%)`);
+      reasons.push({
+        id: "competitive",
+        values: { home: odds.homePct, away: odds.awayPct, draw: odds.drawPct },
+      });
     }
   }
 
