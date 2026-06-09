@@ -66,9 +66,9 @@ are decided.
 
 ## Data Sources
 
-- [football-data.org](https://www.football-data.org) supplies the official match
+- [`football-data.org`](https://www.football-data.org) supplies the official match
   schedule, teams, match status, and final scores.
-- [The Odds API](https://the-odds-api.com) supplies match-winner odds used to
+- [`the-odds-api.com`](https://the-odds-api.com) supplies match-winner odds used to
   estimate team and draw probabilities for competitive-game selection.
 - The big-game ranking uses a dated pre-tournament snapshot of tournament-winner
   odds.
