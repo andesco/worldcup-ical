@@ -1,20 +1,30 @@
 // src/cron.js
-import { fetchFixtures, fetchOddsForDate } from "./api-football.js";
+import { fetchFixtures } from "./football-data.js";
+import { fetchOdds, pairKey } from "./odds-api.js";
 
-export function datesNext48h(fixtures, now) {
-  const end = now.getTime() + 48 * 3600 * 1000;
-  const set = new Set();
+// Join the-odds-api per-code probabilities onto football-data fixtures, producing
+// the oddsMap (keyed by fixture id) that the feed consumes. Re-orients each entry
+// to the fixture's own home/away.
+export function joinOdds(fixtures, oddsList) {
+  const idx = new Map(oddsList.map((o) => [o.key, o]));
+  const oddsMap = {};
   for (const f of fixtures) {
-    const t = Date.parse(f.utcKickoff);
-    if (t >= now.getTime() && t <= end) set.add(f.utcKickoff.slice(0, 10));
+    if (!f.home || !f.away) continue;
+    const o = idx.get(pairKey(f.home.code, f.away.code));
+    if (!o) continue;
+    oddsMap[String(f.id)] = {
+      homePct: o.byCode[f.home.code],
+      drawPct: o.drawPct,
+      awayPct: o.byCode[f.away.code],
+    };
   }
-  return [...set].sort();
+  return oddsMap;
 }
 
 export async function handleScheduled(event, env) {
   const now = new Date(event.scheduledTime);
 
-  // Fixtures every run. On failure, leave the last good cache untouched.
+  // Fixtures every run; keep last good cache on failure.
   let fixtures = null;
   try {
     fixtures = await fetchFixtures(env);
@@ -26,14 +36,12 @@ export async function handleScheduled(event, env) {
     if (cached) fixtures = JSON.parse(cached);
   }
 
-  // Odds only at the top of the hour (gates ~hourly inside the 30-min cron).
+  // Odds only at the top of the hour (the-odds-api refreshes ~hourly anyway).
   if (now.getUTCMinutes() === 0 && fixtures) {
     try {
-      const merged = {};
-      for (const date of datesNext48h(fixtures, now)) {
-        Object.assign(merged, await fetchOddsForDate(env, date));
-      }
-      await env.WC_STORE.put("odds", JSON.stringify(merged));
+      const oddsList = await fetchOdds(env);
+      const oddsMap = joinOdds(fixtures, oddsList);
+      await env.WC_STORE.put("odds", JSON.stringify(oddsMap));
       await env.WC_STORE.put("odds_lastupdate", String(now.getTime()));
     } catch (err) {
       console.error("odds pull failed:", err.message);

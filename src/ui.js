@@ -1,9 +1,9 @@
 // src/ui.js
-import { TEAMS, flagEmoji } from "./flags.js";
+import { TEAMS } from "./flags.js";
 
 export function renderSettingsPage() {
   const teamData = JSON.stringify(
-    TEAMS.map((t) => ({ code: t.code, name: t.name, flag: flagEmoji(t.iso2) }))
+    TEAMS.map((t) => ({ code: t.code, name: t.name, flag: t.flag }))
       .sort((a, b) => a.name.localeCompare(b.name))
   );
 

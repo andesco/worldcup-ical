@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { handleScheduled, datesNext48h } from "../src/cron.js";
+import { handleScheduled, joinOdds } from "../src/cron.js";
 
 function makeKV(init = {}) {
   const m = new Map(Object.entries(init));
@@ -7,39 +7,54 @@ function makeKV(init = {}) {
 }
 afterEach(() => vi.unstubAllGlobals());
 
-describe("cron", () => {
-  it("lists unique fixture dates within 48h of now", () => {
-    const fixtures = [
-      { id: 1, utcKickoff: "2026-06-11T20:00:00Z" },
-      { id: 2, utcKickoff: "2026-06-12T18:00:00Z" },
-      { id: 3, utcKickoff: "2026-06-20T18:00:00Z" },
-    ];
-    const dates = datesNext48h(fixtures, new Date("2026-06-11T08:00:00Z"));
-    expect(dates).toEqual(["2026-06-11", "2026-06-12"]);
-  });
+const fixtures = [
+  { id: 1, utcKickoff: "2026-06-11T19:00:00Z", home: { code: "MEX", name: "Mexico" }, away: { code: "RSA", name: "South Africa" } },
+  { id: 2, utcKickoff: "2026-06-12T18:00:00Z", home: null, away: null }, // TBD
+];
+// the-odds-api lists this game with home/away SWAPPED vs football-data:
+const oddsList = [
+  { key: "MEX|RSA", byCode: { MEX: 70, RSA: 14 }, drawPct: 16, date: "2026-06-11" },
+];
 
-  it("always writes fixtures; pulls odds only at top of hour", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (url) => ({
-      ok: true,
-      json: async () =>
-        url.includes("/fixtures")
-          ? { response: [{ fixture: { id: 1, date: "2026-06-11T20:00:00+00:00", status: { short: "NS" }, venue: { name: "V", city: "C" } }, league: { round: "Group Stage - 1" }, teams: { home: { name: "Spain" }, away: { name: "France" } }, goals: {} }] }
-          : { response: [{ fixture: { id: 1 }, bookmakers: [{ id: 8, bets: [{ id: 1, values: [{ value: "Home", odd: "2.0" }, { value: "Draw", odd: "3.5" }, { value: "Away", odd: "4.0" }] }] }] }] },
-    })));
-    const env = { WC_STORE: makeKV(), API_FOOTBALL_KEY: "k" };
+describe("joinOdds", () => {
+  it("re-orients odds to the fixture's own home/away and skips TBD", () => {
+    const m = joinOdds(fixtures, oddsList);
+    expect(m["1"]).toEqual({ homePct: 70, drawPct: 16, awayPct: 14 });
+    expect(m["2"]).toBeUndefined();
+  });
+});
+
+function stubFetch() {
+  vi.stubGlobal("fetch", vi.fn(async (url) => ({
+    ok: true,
+    json: async () =>
+      url.includes("football-data.org")
+        ? { matches: [{ id: 1, utcDate: "2026-06-11T19:00:00Z", status: "TIMED", stage: "GROUP_STAGE", group: "GROUP_A",
+            homeTeam: { name: "Mexico" }, awayTeam: { name: "South Africa" }, score: { fullTime: {} } }] }
+        : [{ home_team: "South Africa", away_team: "Mexico", commence_time: "2026-06-11T19:00:00Z",
+            bookmakers: [{ markets: [{ key: "h2h", outcomes: [
+              { name: "Mexico", price: 1.4 }, { name: "South Africa", price: 8 }, { name: "Draw", price: 4.5 },
+            ] }] }] }],
+  })));
+}
+
+describe("handleScheduled", () => {
+  it("writes fixtures every run; odds only at top of hour, joined to fixtures", async () => {
+    stubFetch();
+    const env = { WC_STORE: makeKV(), FOOTBALL_DATA_TOKEN: "t", ODDS_API_KEY: "k" };
 
     await handleScheduled({ scheduledTime: Date.parse("2026-06-11T17:30:00Z") }, env);
     expect(env.WC_STORE.store.has("fixtures")).toBe(true);
     expect(env.WC_STORE.store.has("odds")).toBe(false);
 
     await handleScheduled({ scheduledTime: Date.parse("2026-06-11T18:00:00Z") }, env);
-    expect(env.WC_STORE.store.has("odds")).toBe(true);
-    expect(JSON.parse(env.WC_STORE.store.get("odds"))["1"]).toBeTruthy();
+    const odds = JSON.parse(env.WC_STORE.store.get("odds"));
+    expect(odds["1"].homePct).toBeGreaterThan(odds["1"].awayPct); // Mexico favoured
   });
 
-  it("keeps last good cache when the fixtures fetch fails", async () => {
+  it("keeps last good fixtures cache when the fetch fails", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 500, json: async () => ({}) })));
-    const env = { WC_STORE: makeKV({ fixtures: JSON.stringify([{ id: 9 }]) }), API_FOOTBALL_KEY: "k" };
+    const env = { WC_STORE: makeKV({ fixtures: JSON.stringify([{ id: 9 }]) }), FOOTBALL_DATA_TOKEN: "t", ODDS_API_KEY: "k" };
     await handleScheduled({ scheduledTime: Date.parse("2026-06-11T18:00:00Z") }, env);
     expect(JSON.parse(env.WC_STORE.store.get("fixtures"))[0].id).toBe(9);
   });

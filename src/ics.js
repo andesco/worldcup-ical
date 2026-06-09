@@ -55,7 +55,6 @@ function descriptionFor(fixture, odds, reasons) {
 export function buildVEvent({ fixture, odds, reasons }) {
   const start = icsDate(fixture.utcKickoff);
   const end = icsDate(new Date(Date.parse(fixture.utcKickoff) + 2 * 3600 * 1000).toISOString());
-  const loc = `${fixture.venue.name}, ${fixture.venue.city}`;
   const lines = [
     "BEGIN:VEVENT",
     `UID:wc2026-${fixture.id}@worldcup.andrewe.dev`,
@@ -64,10 +63,15 @@ export function buildVEvent({ fixture, odds, reasons }) {
     `DTEND:${end}`,
     `SEQUENCE:${sequenceFor(fixture)}`,
     foldLine(`SUMMARY:${escapeText(matchSummary(fixture))}`),
-    foldLine(`LOCATION:${escapeText(loc)}`),
-    foldLine(`DESCRIPTION:${escapeText(descriptionFor(fixture, odds, reasons))}`),
-    "END:VEVENT",
   ];
+  if (fixture.venue && fixture.venue.name) {
+    const loc = fixture.venue.city
+      ? `${fixture.venue.name}, ${fixture.venue.city}`
+      : fixture.venue.name;
+    lines.push(foldLine(`LOCATION:${escapeText(loc)}`));
+  }
+  lines.push(foldLine(`DESCRIPTION:${escapeText(descriptionFor(fixture, odds, reasons))}`));
+  lines.push("END:VEVENT");
   return lines.join("\r\n");
 }
 
