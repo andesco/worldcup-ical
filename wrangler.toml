@@ -2,6 +2,10 @@ name = "worldcup-ical"
 main = "src/index.js"
 compatibility_date = "2024-11-01"
 
+[[routes]]
+pattern = "worldcup.andrewe.ca"
+custom_domain = true
+
 # fixtures: every 30 min; odds gated to top-of-hour inside the handler.
 # Window 14:00-08:00 UTC = 7AM-1AM PDT (June-July 2026 is all PDT).
 [triggers]

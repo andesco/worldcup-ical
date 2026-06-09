@@ -6,7 +6,7 @@ calendar update as the tournament progresses.
 
 Open the calendar builder:
 
-**https://worldcup-ical.andrewe.workers.dev**
+**https://worldcup.andrewe.ca**
 
 ## Subscribe
 
