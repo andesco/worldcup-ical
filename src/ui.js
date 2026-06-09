@@ -15,31 +15,34 @@ export function renderSettingsPage() {
   <title>World Cup 2026 — Custom Calendar</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
   <style>
-    /* Column count is always a factor of 48 so all 48 teams fill complete,
-       equal-length columns (no ragged final row). */
+    /* The grid responds to its OWN available width (container queries), not the
+       device viewport. Column count is always a factor of 48 (1/2/3/4/6) so all
+       48 teams fill complete, equal-length columns with no ragged final row —
+       excluding 5 columns requires discrete steps, but they grow with space. */
+    .team-grid-wrap { container-type: inline-size; }
+    /* minmax(0, 1fr) — NOT plain 1fr — lets tracks shrink below content width so
+       long names actually clip with an ellipsis instead of overflowing. */
     .team-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(1, minmax(0, 1fr));
       gap: 0.5rem;
     }
-    @media (min-width: 576px)  { .team-grid { grid-template-columns: repeat(3, 1fr); } }
-    @media (min-width: 768px)  { .team-grid { grid-template-columns: repeat(4, 1fr); } }
-    @media (min-width: 1024px) { .team-grid { grid-template-columns: repeat(6, 1fr); } }
+    @container (min-width: 22rem) { .team-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @container (min-width: 34rem) { .team-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @container (min-width: 46rem) { .team-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+    @container (min-width: 64rem) { .team-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+    /* The label itself is the clip box: width:100% pins it to the (minmax 0) track,
+       and overflow/ellipsis trim the trailing name to one line ending in "…". */
     .team-grid label {
       font-weight: normal;
       margin: 0 0 0.5rem 0;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      min-width: 0;
-    }
-    .team-grid label span {
-      white-space: nowrap;
+      display: block;
+      width: 100%;
+      max-width: 100%;
       overflow: hidden;
+      white-space: nowrap;
       text-overflow: ellipsis;
-      min-width: 0;
     }
-    .team-grid input { flex: 0 0 auto; }
     .team-grid input:checked + span {
       font-weight: bold;
     }
@@ -74,7 +77,9 @@ export function renderSettingsPage() {
       <fieldset>
         <legend>Favourite teams</legend>
         <input type="search" id="team-filter" placeholder="Filter teams…">
-        <div class="team-grid" data-role="team-list"></div>
+        <div class="team-grid-wrap">
+          <div class="team-grid" data-role="team-list"></div>
+        </div>
       </fieldset>
 
       <fieldset>
