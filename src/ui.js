@@ -67,7 +67,14 @@ export function renderSettingsPage() {
       flex: 1 1 0; margin: 0; padding: 0 0.6rem; width: 2rem;
       display: flex; align-items: center; justify-content: center;
       font-size: 0.7rem; line-height: 1; border-radius: 0;
+      /* Neutral chrome that matches the input, not the blue primary button. */
+      background: var(--pico-form-element-background-color);
+      color: var(--pico-muted-color);
       border: 1px solid var(--pico-form-element-border-color); border-left: none;
+    }
+    .num-btns button:hover {
+      background: var(--pico-secondary-background);
+      color: var(--pico-secondary-inverse);
     }
     .num-btns button:first-child { border-bottom: none; border-top-right-radius: var(--pico-border-radius); }
     .num-btns button:last-child { border-bottom-right-radius: var(--pico-border-radius); }
@@ -120,15 +127,15 @@ export function renderSettingsPage() {
       </fieldset>
 
       <fieldset>
-        <legend>Close games</legend>
+        <legend>Competitive games</legend>
         <label class="rule-row">
-          <input type="checkbox" id="closeGame-on">
+          <input type="checkbox" id="competitiveGame-on">
           the two teams' win chances are within
           <span class="num">
-            <input type="number" id="close" min="1" max="50" value="10">
+            <input type="number" id="competitive" min="1" max="50" value="10">
             <span class="num-btns">
-              <button type="button" data-target="close" data-step="1" aria-label="increase">▲</button>
-              <button type="button" data-target="close" data-step="-1" aria-label="decrease">▼</button>
+              <button type="button" data-target="competitive" data-step="1" aria-label="increase">▲</button>
+              <button type="button" data-target="competitive" data-step="-1" aria-label="decrease">▼</button>
             </span>
           </span>
           percentage points
@@ -179,7 +186,7 @@ export function renderSettingsPage() {
       var p = new URLSearchParams();
       if (teams.length) p.set('teams', teams.join(','));
       if (document.getElementById('bigGame-on').checked) p.set('topx', document.getElementById('topx').value);
-      if (document.getElementById('closeGame-on').checked) p.set('close', document.getElementById('close').value);
+      if (document.getElementById('competitiveGame-on').checked) p.set('competitive', document.getElementById('competitive').value);
       return p;
     }
 
@@ -246,7 +253,7 @@ export function renderSettingsPage() {
         if (cb) cb.checked = true;
       });
       if (sp.get('topx')) { document.getElementById('bigGame-on').checked = true; document.getElementById('topx').value = sp.get('topx'); }
-      if (sp.get('close')) { document.getElementById('closeGame-on').checked = true; document.getElementById('close').value = sp.get('close'); }
+      if (sp.get('competitive')) { document.getElementById('competitiveGame-on').checked = true; document.getElementById('competitive').value = sp.get('competitive'); }
       update();
     })();
   </script>

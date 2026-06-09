@@ -3,7 +3,7 @@
 // `soccer_fifa_world_cup`; the h2h market gives 1X2 decimal odds per fixture.
 // One call returns all currently-priced events (~1 credit of the 500/mo free tier).
 import { codeForOa } from "./flags.js";
-import { impliedFrom1x2 } from "./closeness.js";
+import { impliedFrom1x2 } from "./competitive.js";
 
 export const OA_BASE = "https://api.the-odds-api.com/v4";
 export const OA_SPORT = "soccer_fifa_world_cup";

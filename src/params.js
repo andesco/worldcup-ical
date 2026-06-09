@@ -13,7 +13,7 @@ export function parseFeedParams(searchParams) {
       .filter(Boolean)
   );
   const topx = posInt(searchParams.get("topx"));
-  const close = posInt(searchParams.get("close"));
-  const hasAnyRule = teams.size > 0 || topx !== null || close !== null;
-  return { teams, topx, close, hasAnyRule };
+  const competitive = posInt(searchParams.get("competitive"));
+  const hasAnyRule = teams.size > 0 || topx !== null || competitive !== null;
+  return { teams, topx, competitive, hasAnyRule };
 }

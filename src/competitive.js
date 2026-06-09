@@ -1,4 +1,4 @@
-// src/closeness.js
+// src/competitive.js
 // Convert decimal 1X2 odds to implied probabilities, remove the bookmaker's
 // overround (vig) by normalising to 100, and round to integer percentages.
 export function impliedFrom1x2(homeDec, drawDec, awayDec) {
@@ -10,8 +10,8 @@ export function impliedFrom1x2(homeDec, drawDec, awayDec) {
   return { homePct, drawPct, awayPct };
 }
 
-// "Closeness" of a fixture: the gap between the two sides' win probabilities.
-// Smaller gap = more evenly matched.
-export function closenessGap({ homePct, awayPct }) {
+// How competitive a fixture is: the gap between the two sides' win probabilities.
+// Smaller gap = more evenly matched = more competitive.
+export function competitiveGap({ homePct, awayPct }) {
   return Math.abs(homePct - awayPct);
 }

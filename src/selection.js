@@ -1,6 +1,6 @@
 // src/selection.js
 import { inTopX } from "./odds-snapshot.js";
-import { closenessGap } from "./closeness.js";
+import { competitiveGap } from "./competitive.js";
 
 // Apply the three OR'd rules to one fixture. `odds` is the normalised
 // { homePct, drawPct, awayPct } for this fixture, or null if unavailable.
@@ -19,9 +19,9 @@ export function evaluateMatch(fixture, odds, config) {
     reasons.push("big game");
   }
 
-  if (haveTeams && config.close != null && odds) {
-    if (closenessGap(odds) <= config.close) {
-      reasons.push(`close game (${odds.homePct}% / ${odds.awayPct}%, draw ${odds.drawPct}%)`);
+  if (haveTeams && config.competitive != null && odds) {
+    if (competitiveGap(odds) <= config.competitive) {
+      reasons.push(`competitive game (${odds.homePct}% / ${odds.awayPct}%, draw ${odds.drawPct}%)`);
     }
   }
 

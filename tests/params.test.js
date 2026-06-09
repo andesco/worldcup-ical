@@ -10,23 +10,23 @@ describe("parseFeedParams", () => {
     expect(c.hasAnyRule).toBe(true);
   });
 
-  it("parses topx and close as integers", () => {
-    const c = cfg("?topx=8&close=10");
+  it("parses topx and competitive as integers", () => {
+    const c = cfg("?topx=8&competitive=10");
     expect(c.topx).toBe(8);
-    expect(c.close).toBe(10);
+    expect(c.competitive).toBe(10);
   });
 
   it("disables a rule when its param is absent", () => {
     const c = cfg("?teams=ESP");
     expect(c.topx).toBeNull();
-    expect(c.close).toBeNull();
+    expect(c.competitive).toBeNull();
   });
 
   it("ignores empty/invalid values", () => {
-    const c = cfg("?teams=&topx=abc&close=-3");
+    const c = cfg("?teams=&topx=abc&competitive=-3");
     expect(c.teams.size).toBe(0);
     expect(c.topx).toBeNull();
-    expect(c.close).toBeNull();
+    expect(c.competitive).toBeNull();
     expect(c.hasAnyRule).toBe(false);
   });
 });

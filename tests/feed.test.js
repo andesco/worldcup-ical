@@ -11,7 +11,7 @@ const oddsMap = { "1": { homePct: 41, drawPct: 22, awayPct: 37 } };
 
 describe("feed", () => {
   it("selects only qualifying fixtures with reasons", () => {
-    const sel = selectMatches(fixtures, oddsMap, { teams: new Set(["USA"]), topx: 8, close: 10 });
+    const sel = selectMatches(fixtures, oddsMap, { teams: new Set(["USA"]), topx: 8, competitive: 10 });
     const ids = sel.map((s) => s.fixture.id).sort();
     expect(ids).toEqual([1, 2]);
     const one = sel.find((s) => s.fixture.id === 1);
@@ -19,14 +19,14 @@ describe("feed", () => {
   });
 
   it("builds a full ICS calendar of the selection", () => {
-    const ics = buildFeed(fixtures, oddsMap, { teams: new Set(["USA"]), topx: null, close: null });
+    const ics = buildFeed(fixtures, oddsMap, { teams: new Set(["USA"]), topx: null, competitive: null });
     expect(ics).toContain("BEGIN:VCALENDAR");
     expect(ics).toContain("UID:wc2026-2@worldcup.andrewe.dev");
     expect(ics).not.toContain("UID:wc2026-1@");
   });
 
   it("an empty selection still yields a valid empty calendar", () => {
-    const ics = buildFeed(fixtures, oddsMap, { teams: new Set(), topx: null, close: null });
+    const ics = buildFeed(fixtures, oddsMap, { teams: new Set(), topx: null, competitive: null });
     expect(ics).toContain("BEGIN:VCALENDAR");
     expect(ics).not.toContain("BEGIN:VEVENT");
   });

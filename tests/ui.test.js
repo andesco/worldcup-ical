@@ -12,7 +12,7 @@ describe("settings page", () => {
     const html = renderSettingsPage();
     expect(html).toContain('data-role="team-list"');
     expect(html).toContain('id="topx"');
-    expect(html).toContain('id="close"');
+    expect(html).toContain('id="competitive"');
     expect(html).toContain('id="subscribe-url"');
   });
 

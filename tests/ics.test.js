@@ -36,12 +36,12 @@ describe("ics", () => {
   });
 
   it("builds a VEVENT with stable UID, 2h end, location, reasons", () => {
-    const ev = buildVEvent({ fixture: fx(), odds: { homePct: 41, drawPct: 22, awayPct: 37 }, reasons: ["big game", "close game (41% / 37%)"] });
+    const ev = buildVEvent({ fixture: fx(), odds: { homePct: 41, drawPct: 22, awayPct: 37 }, reasons: ["big game", "competitive game (41% / 37%)"] });
     expect(ev).toContain("UID:wc2026-42@worldcup.andrewe.dev");
     expect(ev).toContain("DTSTART:20260611T200000Z");
     expect(ev).toContain("DTEND:20260611T220000Z");
     expect(ev).toContain("LOCATION:SoFi Stadium\\, Inglewood");
-    expect(ev).toContain("Included: big game\\; close game (41% / 37%)");
+    expect(ev).toContain("Included: big game\\; competitive game (41% / 37%)");
     expect(ev).toContain("SEQUENCE:1");
   });
 

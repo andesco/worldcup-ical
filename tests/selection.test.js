@@ -7,7 +7,7 @@ const fx = (over = {}) => ({
   home: { code: "ESP", name: "Spain" }, away: { code: "NOR", name: "Norway" },
   score: null, ...over,
 });
-const cfg = (over = {}) => ({ teams: new Set(), topx: null, close: null, ...over });
+const cfg = (over = {}) => ({ teams: new Set(), topx: null, competitive: null, ...over });
 
 describe("evaluateMatch", () => {
   it("includes a match with a favourite team", () => {
@@ -24,13 +24,13 @@ describe("evaluateMatch", () => {
     expect(r.reasons).toContain("big game");
   });
 
-  it("close-game fires only when odds exist and gap within threshold", () => {
+  it("competitive-game fires only when odds exist and gap within threshold", () => {
     const odds = { homePct: 48, drawPct: 26, awayPct: 26 };
-    expect(evaluateMatch(fx(), odds, cfg({ close: 10 })).included).toBe(false);
+    expect(evaluateMatch(fx(), odds, cfg({ competitive: 10 })).included).toBe(false);
     const tight = { homePct: 40, drawPct: 24, awayPct: 36 };
-    const r = evaluateMatch(fx(), tight, cfg({ close: 10 }));
+    const r = evaluateMatch(fx(), tight, cfg({ competitive: 10 }));
     expect(r.included).toBe(true);
-    expect(r.reasons).toContain("close game (40% / 36%, draw 24%)");
+    expect(r.reasons).toContain("competitive game (40% / 36%, draw 24%)");
   });
 
   it("ignores rules for fixtures with TBD teams", () => {
@@ -41,10 +41,10 @@ describe("evaluateMatch", () => {
   it("collects multiple reasons and de-dupes inclusion", () => {
     const both = fx({ away: { code: "FRA", name: "France" } });
     const r = evaluateMatch(both, { homePct: 41, drawPct: 22, awayPct: 37 },
-      cfg({ teams: new Set(["ESP"]), topx: 8, close: 10 }));
+      cfg({ teams: new Set(["ESP"]), topx: 8, competitive: 10 }));
     expect(r.included).toBe(true);
     expect(r.reasons).toEqual([
-      "favourite team", "big game", "close game (41% / 37%, draw 22%)",
+      "favourite team", "big game", "competitive game (41% / 37%, draw 22%)",
     ]);
   });
 });
