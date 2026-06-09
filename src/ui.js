@@ -49,7 +49,28 @@ export function renderSettingsPage() {
     fieldset { margin-top: 1.25rem; }
     fieldset legend { font-size: 1.25rem; font-weight: bold; }
     .rule-row { min-height: 2.5rem; }
-    .rule-row input[type="number"] { width: 5rem; display: inline-block; margin: 0 0.25rem; }
+    .rule-hint { margin: 0.25rem 0 0 1.9rem; color: var(--pico-muted-color); }
+
+    /* Custom number stepper: native spin arrows are tiny and unstyleable in
+       Safari, so we hide them and stack our own ▲/▼ buttons, each half the
+       field height (combined = exact input height). */
+    input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .num { display: inline-flex; align-items: stretch; vertical-align: middle; margin: 0 0.25rem; }
+    .num input[type="number"] {
+      width: 3.5rem; margin: 0; text-align: center;
+      border-radius: var(--pico-border-radius) 0 0 var(--pico-border-radius);
+    }
+    .num-btns { display: flex; flex-direction: column; }
+    .num-btns button {
+      flex: 1 1 0; margin: 0; padding: 0 0.6rem; width: 2rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; line-height: 1; border-radius: 0;
+      border: 1px solid var(--pico-form-element-border-color); border-left: none;
+    }
+    .num-btns button:first-child { border-bottom: none; border-top-right-radius: var(--pico-border-radius); }
+    .num-btns button:last-child { border-bottom-right-radius: var(--pico-border-radius); }
     #subscribe-url { display: block; overflow-x: auto; white-space: nowrap; }
     #copyBtn { width: 8rem; }
     button.copied {
@@ -86,7 +107,15 @@ export function renderSettingsPage() {
         <legend>Big games</legend>
         <label class="rule-row">
           <input type="checkbox" id="bigGame-on">
-          both teams in the top <input type="number" id="topx" min="1" max="48" value="8"> by winner odds
+          both teams ranked in the top
+          <span class="num">
+            <input type="number" id="topx" min="1" max="48" value="8">
+            <span class="num-btns">
+              <button type="button" data-target="topx" data-step="1" aria-label="increase">▲</button>
+              <button type="button" data-target="topx" data-step="-1" aria-label="decrease">▼</button>
+            </span>
+          </span>
+          by odds to win the World Cup
         </label>
       </fieldset>
 
@@ -94,8 +123,17 @@ export function renderSettingsPage() {
         <legend>Close games</legend>
         <label class="rule-row">
           <input type="checkbox" id="closeGame-on">
-          win probabilities within <input type="number" id="close" min="1" max="50" value="10"> points
+          the two teams' win chances are within
+          <span class="num">
+            <input type="number" id="close" min="1" max="50" value="10">
+            <span class="num-btns">
+              <button type="button" data-target="close" data-step="1" aria-label="increase">▲</button>
+              <button type="button" data-target="close" data-step="-1" aria-label="decrease">▼</button>
+            </span>
+          </span>
+          percentage points
         </label>
+        <p class="rule-hint"><small>How evenly matched the game is. Smaller = tighter. The leftover percentage is the chance of a draw.</small></p>
       </fieldset>
 
       <article id="urlOutput">
@@ -185,6 +223,21 @@ export function renderSettingsPage() {
     });
 
     document.getElementById('builder').addEventListener('input', update);
+
+    // Custom number steppers (▲/▼)
+    [].slice.call(document.querySelectorAll('.num-btns button')).forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        var inp = document.getElementById(btn.getAttribute('data-target'));
+        var step = Number(btn.getAttribute('data-step'));
+        var min = Number(inp.min), max = Number(inp.max);
+        var v = (Number(inp.value) || 0) + step;
+        if (!isNaN(min)) v = Math.max(min, v);
+        if (!isNaN(max)) v = Math.min(max, v);
+        inp.value = v;
+        inp.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    });
 
     (function prefill() {
       var sp = new URLSearchParams(location.search);

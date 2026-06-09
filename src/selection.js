@@ -21,7 +21,7 @@ export function evaluateMatch(fixture, odds, config) {
 
   if (haveTeams && config.close != null && odds) {
     if (closenessGap(odds) <= config.close) {
-      reasons.push(`close game (${odds.homePct}% / ${odds.awayPct}%)`);
+      reasons.push(`close game (${odds.homePct}% / ${odds.awayPct}%, draw ${odds.drawPct}%)`);
     }
   }
 

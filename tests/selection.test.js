@@ -30,7 +30,7 @@ describe("evaluateMatch", () => {
     const tight = { homePct: 40, drawPct: 24, awayPct: 36 };
     const r = evaluateMatch(fx(), tight, cfg({ close: 10 }));
     expect(r.included).toBe(true);
-    expect(r.reasons).toContain("close game (40% / 36%)");
+    expect(r.reasons).toContain("close game (40% / 36%, draw 24%)");
   });
 
   it("ignores rules for fixtures with TBD teams", () => {
@@ -44,7 +44,7 @@ describe("evaluateMatch", () => {
       cfg({ teams: new Set(["ESP"]), topx: 8, close: 10 }));
     expect(r.included).toBe(true);
     expect(r.reasons).toEqual([
-      "favourite team", "big game", "close game (41% / 37%)",
+      "favourite team", "big game", "close game (41% / 37%, draw 22%)",
     ]);
   });
 });
