@@ -34,7 +34,7 @@ describe("settings page", () => {
     const html = renderSettingsPage("fr");
     expect(html).toContain('<html lang="fr">');
     expect(html).toContain("<h1 data-i18n-feed=\"calendarName\">Coupe du monde 2026</h1>");
-    expect(html).toContain("<title>Coupe du monde 2026 — Abonnement calendrier personnalisé</title>");
+    expect(html).toContain("<title>Coupe du monde 2026</title>");
     expect(html).toContain("Abonnement calendrier personnalisé");
     expect(html).toContain("Español");
     expect(html).toContain("Português (Brasil)");

@@ -17,7 +17,7 @@ export function renderSettingsPage(locale = "en") {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${activeCatalog.feed.calendarName} — ${u.subtitle}</title>
+  <title>${activeCatalog.feed.calendarName}</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
   <style>
     /* The grid responds to its OWN available width (container queries), not the
