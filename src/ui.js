@@ -286,7 +286,7 @@ export function renderSettingsPage(locale = "en") {
       var token = ++updateToken;
       var p = buildParams();
       var qs = p.toString();
-      var url = location.origin + '/' + (qs ? '?' + qs : '');
+      var url = location.origin + '/feed.ics' + (qs ? '?' + qs : '');
       document.getElementById('subscribe-url').textContent = url;
       document.getElementById('webcal').href = url.replace(/^https?:/, 'webcal:');
       // Keep the browser address bar in sync so the page is shareable/bookmarkable

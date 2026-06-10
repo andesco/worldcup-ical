@@ -43,15 +43,17 @@ function configFrom(url) {
 }
 
 // Decide whether a /feed.ics request is a human in a browser (serve the builder
-// UI) or a calendar client / script (serve the raw .ics). Browsers send
-// `Accept: text/html` on navigation and/or `Sec-Fetch-Dest: document`; calendar
-// apps (Apple Calendar, Google, DAVx5, curl) do not. Default to the feed when
-// the signal is absent so subscriptions always get calendar data.
+// UI) or a calendar client (serve the raw .ics).
 function prefersHtml(request) {
   const dest = request.headers.get("Sec-Fetch-Dest") || "";
   if (dest === "document") return true;
   const accept = request.headers.get("Accept") || "";
   return accept.includes("text/html");
+}
+
+function prefersCalendar(request) {
+  const accept = request.headers.get("Accept") || "";
+  return accept.includes("text/calendar");
 }
 
 function htmlResponse(request) {
@@ -125,9 +127,14 @@ async function servePreview(url, env) {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    if (url.pathname === "/" || url.pathname === "/feed.ics") {
-      // The same URL serves both: builder page for browsers, calendar data for
-      // clients. /feed.ics remains as a backward-compatible alias.
+    if (url.pathname === "/") {
+      // Root defaults to HTML so crawlers and link-preview services can read it.
+      // Preserve existing root subscriptions that explicitly request calendar.
+      return prefersCalendar(request) ? serveFeed(url, request, env, ctx) : htmlResponse(request);
+    }
+    if (url.pathname === "/feed.ics") {
+      // The explicit feed endpoint defaults to calendar data, but remains
+      // inspectable in a browser.
       return prefersHtml(request) ? htmlResponse(request) : serveFeed(url, request, env, ctx);
     }
     if (url.pathname === "/api/preview") return servePreview(url, env);

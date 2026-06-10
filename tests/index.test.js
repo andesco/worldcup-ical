@@ -27,10 +27,18 @@ describe("worker fetch", () => {
     expect(res.headers.get("vary")).toBe("Accept-Language");
   });
 
-  it("serves the ICS feed from the same root URL to a calendar client", async () => {
+  it("serves the ICS feed from the root URL to a client that explicitly requests it", async () => {
     const res = await worker.fetch(req("/?teams=USA", { Accept: "text/calendar" }), env());
     expect(res.headers.get("content-type")).toContain("text/calendar");
     expect(await res.text()).toContain("UID:wc2026-2@worldcup.andrewe.dev");
+  });
+
+  it("defaults the root URL to HTML for crawlers and generic clients", async () => {
+    for (const headers of [{}, { Accept: "*/*" }, { "User-Agent": "Twitterbot/1.0" }]) {
+      const res = await worker.fetch(req("/", headers), env());
+      expect(res.headers.get("content-type")).toContain("text/html");
+      expect(await res.text()).toContain('property="og:image"');
+    }
   });
 
   it("uses an explicit URL locale before browser language", async () => {

@@ -50,9 +50,9 @@ available, it also lists each team's win probability and the draw probability.
 - Use English, Spanish, French, Portuguese, German, Dutch, or Norwegian Bokmål.
 
 Your choices are encoded directly in the subscription URL. You can reopen that
-same URL in a browser later to review or change the calendar settings. Calendar
-apps receive the calendar feed from it, while browsers receive the settings and
-preview page.
+`/feed.ics` URL in a browser later to review or change the calendar settings.
+Calendar apps receive the calendar feed from it, while browsers receive the
+settings and preview page. The site root always opens the calendar builder.
 
 ## Knockout Placeholders
 
