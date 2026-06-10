@@ -21,8 +21,10 @@ export function renderSettingsPage(locale = "en") {
   <meta name="description" content="Follow your favourite teams and add big or competitive World Cup 2026 matches to a calendar that updates automatically.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://worldcup.andrewe.ca/">
+  <meta property="og:site_name" content="World Cup 2026 Custom Calendar">
   <meta property="og:title" content="World Cup 2026 — Custom Calendar Subscription">
   <meta property="og:description" content="Follow favourite teams and add big or competitive matches to a calendar that updates automatically.">
+  <meta property="og:logo" content="https://worldcup.andrewe.ca/apple-touch-icon.png">
   <meta property="og:image" content="https://worldcup.andrewe.ca/og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
