@@ -1,12 +1,17 @@
 # World Cup 2026 Custom Calendar
 
-Build a personal calendar subscription for the 2026 FIFA World Cup. Choose the
-teams and types of matches you care about, then subscribe once and let the
-calendar update as the tournament progresses.
+Create a personal calendar subscription for the 2026 FIFA World Cup.
 
 Open the calendar builder:
 
 **https://worldcup.andrewe.ca**
+
+It can:
+
+- Follow your favourite teams.
+- Add **big** matches between top-ranked teams.
+- Add **competitive** matches using market odds.
+- Update matches automatically as the tournament progresses.
 
 ## Subscribe
 

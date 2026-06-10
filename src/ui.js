@@ -18,6 +18,21 @@ export function renderSettingsPage(locale = "en") {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${activeCatalog.feed.calendarName}</title>
+  <meta name="description" content="Follow your favourite teams and add big or competitive World Cup 2026 matches to a calendar that updates automatically.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://worldcup.andrewe.ca/">
+  <meta property="og:title" content="World Cup 2026 — Custom Calendar Subscription">
+  <meta property="og:description" content="Follow favourite teams and add big or competitive matches to a calendar that updates automatically.">
+  <meta property="og:image" content="https://worldcup.andrewe.ca/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="World Cup 2026 custom calendar subscription">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="World Cup 2026 — Custom Calendar Subscription">
+  <meta name="twitter:description" content="Follow favourite teams and add big or competitive matches to a calendar that updates automatically.">
+  <meta name="twitter:image" content="https://worldcup.andrewe.ca/og-image.png">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
   <style>
     /* The grid responds to its OWN available width (container queries), not the

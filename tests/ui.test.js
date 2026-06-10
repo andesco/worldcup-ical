@@ -8,6 +8,15 @@ describe("settings page", () => {
     expect(html).toContain("World Cup 2026");
   });
 
+  it("includes Open Graph, Twitter card, and icon metadata", () => {
+    const html = renderSettingsPage();
+    expect(html).toContain('property="og:title" content="World Cup 2026 — Custom Calendar Subscription"');
+    expect(html).toContain('property="og:image" content="https://worldcup.andrewe.ca/og-image.png"');
+    expect(html).toContain('name="twitter:card" content="summary_large_image"');
+    expect(html).toContain('name="twitter:image" content="https://worldcup.andrewe.ca/og-image.png"');
+    expect(html).toContain('rel="apple-touch-icon" href="/apple-touch-icon.png"');
+  });
+
   it("includes team checkboxes, rule inputs, and an output URL field", () => {
     const html = renderSettingsPage();
     expect(html).toContain('data-role="team-list"');
