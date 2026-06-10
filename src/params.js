@@ -18,11 +18,9 @@ export function parseFeedParams(searchParams) {
   const competitive = posInt(searchParams.get("competitive"));
   const knockout = searchParams.has("knockout");
   const hostOpeners = searchParams.has("openers");
-  const hasAnyRule =
-    teams.size > 0 || rank !== null || competitive !== null || knockout || hostOpeners;
   // Display options (not selection rules): flags on by default, FIFA code off.
   const flags = searchParams.get("flags") !== "0";
   const code = searchParams.get("code") === "1";
   const lang = resolveLocale(searchParams.get("lang")) || "en";
-  return { teams, rank, competitive, knockout, hostOpeners, flags, code, lang, hasAnyRule };
+  return { teams, rank, competitive, knockout, hostOpeners, flags, code, lang };
 }

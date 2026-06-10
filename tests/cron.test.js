@@ -22,6 +22,25 @@ describe("joinOdds", () => {
     expect(m["1"]).toEqual({ homePct: 70, drawPct: 16, awayPct: 14 });
     expect(m["2"]).toBeUndefined();
   });
+
+  it("skips finished fixtures so they cannot gain odds retroactively", () => {
+    const finished = [{ ...fixtures[0], finished: true }];
+    expect(joinOdds(finished, oddsList)["1"]).toBeUndefined();
+  });
+
+  it("disambiguates a knockout rematch of the same pair by kickoff date", () => {
+    const rematch = [
+      { id: 1, utcKickoff: "2026-06-11T19:00:00Z", home: { code: "MEX" }, away: { code: "RSA" } },
+      { id: 9, utcKickoff: "2026-07-10T19:00:00Z", home: { code: "RSA" }, away: { code: "MEX" } },
+    ];
+    const list = [
+      { key: "MEX|RSA", byCode: { MEX: 70, RSA: 14 }, drawPct: 16, date: "2026-06-11" },
+      { key: "MEX|RSA", byCode: { MEX: 55, RSA: 25 }, drawPct: 20, date: "2026-07-10" },
+    ];
+    const m = joinOdds(rematch, list);
+    expect(m["1"]).toEqual({ homePct: 70, drawPct: 16, awayPct: 14 });
+    expect(m["9"]).toEqual({ homePct: 25, drawPct: 20, awayPct: 55 }); // re-oriented
+  });
 });
 
 function stubFetch() {

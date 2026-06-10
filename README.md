@@ -49,10 +49,11 @@ available, it also lists each team's win probability and the draw probability.
 - Display full team names or FIFA three-letter codes.
 - Use English, Spanish, French, Portuguese, German, Dutch, or Norwegian Bokmål.
 
-Your choices are encoded directly in the subscription URL. You can reopen that
-`/feed.ics` URL in a browser later to review or change the calendar settings.
-Calendar apps receive the calendar feed from it, while browsers receive the
-settings and preview page. The site root always opens the calendar builder.
+Your choices are encoded directly in the subscription URL. The `/feed.ics`
+endpoint always returns the calendar feed itself. To review or change your
+settings later, open the site root with the same query string (replace
+`/feed.ics` with `/` in your subscription URL) — the builder reloads with your
+selection prefilled.
 
 ## Knockout Placeholders
 

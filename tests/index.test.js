@@ -15,7 +15,7 @@ const fixtures = [
 const env = (odds = {}, version = "1000") => ({
   WC_STORE: makeKV({ fixtures: JSON.stringify(fixtures), odds: JSON.stringify(odds), data_version: version }),
 });
-const req = (path, headers = {}) => new Request("https://worldcup.andrewe.dev" + path, { headers });
+const req = (path, headers = {}) => new Request("https://worldcup.andrewe.ca" + path, { headers });
 
 describe("worker fetch", () => {
   it("serves the settings UI at /", async () => {
@@ -30,7 +30,7 @@ describe("worker fetch", () => {
   it("serves the ICS feed from the root URL to a client that explicitly requests it", async () => {
     const res = await worker.fetch(req("/?teams=USA", { Accept: "text/calendar" }), env());
     expect(res.headers.get("content-type")).toContain("text/calendar");
-    expect(await res.text()).toContain("UID:wc2026-2@worldcup.andrewe.dev");
+    expect(await res.text()).toContain("UID:wc2026-2@worldcup.andrewe.ca");
   });
 
   it("defaults the root URL to HTML for crawlers and generic clients", async () => {
@@ -63,20 +63,20 @@ describe("worker fetch", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toContain("text/calendar");
     const body = await res.text();
-    expect(body).toContain("UID:wc2026-2@worldcup.andrewe.dev");
+    expect(body).toContain("UID:wc2026-2@worldcup.andrewe.ca");
     expect(body).not.toContain("UID:wc2026-1@");
   });
 
-  it("serves the builder UI when /feed.ics is opened in a browser (Accept: text/html)", async () => {
-    const res = await worker.fetch(req("/feed.ics?teams=USA", { Accept: "text/html,application/xhtml+xml" }), env());
-    expect(res.status).toBe(200);
-    expect(res.headers.get("content-type")).toContain("text/html");
-    expect(await res.text()).toContain("World Cup 2026");
-  });
-
-  it("serves the builder UI when /feed.ics is a browser navigation (Sec-Fetch-Dest: document)", async () => {
-    const res = await worker.fetch(req("/feed.ics?teams=USA", { "Sec-Fetch-Dest": "document" }), env());
-    expect(res.headers.get("content-type")).toContain("text/html");
+  it("always serves ICS from /feed.ics, even to a browser (no content negotiation)", async () => {
+    for (const headers of [
+      { Accept: "text/html,application/xhtml+xml" },
+      { "Sec-Fetch-Dest": "document" },
+      {},
+    ]) {
+      const res = await worker.fetch(req("/feed.ics?teams=USA", headers), env());
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-type")).toContain("text/calendar");
+    }
   });
 
   it("serves the ICS feed to a calendar client (Accept: text/calendar)", async () => {
@@ -92,6 +92,24 @@ describe("worker fetch", () => {
     expect(etag).toBeTruthy();
     const second = await worker.fetch(req("/feed.ics?teams=USA", { "If-None-Match": etag }), e);
     expect(second.status).toBe(304);
+  });
+
+  it("returns 304 for weak or multi-value If-None-Match (proxy-mangled)", async () => {
+    const e = env();
+    const first = await worker.fetch(req("/feed.ics?teams=USA"), e);
+    const etag = first.headers.get("etag");
+    const weak = await worker.fetch(req("/feed.ics?teams=USA", { "If-None-Match": `W/${etag}` }), e);
+    expect(weak.status).toBe(304);
+    const multi = await worker.fetch(req("/feed.ics?teams=USA", { "If-None-Match": `"other", ${etag}` }), e);
+    expect(multi.status).toBe(304);
+  });
+
+  it("serves ICS when a calendar client lists text/html but prefers text/calendar", async () => {
+    const res = await worker.fetch(
+      req("/feed.ics?teams=USA", { Accept: "text/calendar, text/html;q=0.5" }),
+      env()
+    );
+    expect(res.headers.get("content-type")).toContain("text/calendar");
   });
 
   it("gives distinct ETags to distinct feeds", async () => {

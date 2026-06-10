@@ -24,7 +24,6 @@ export function renderSettingsPage(locale = "en") {
   <meta property="og:site_name" content="World Cup 2026 Custom Calendar">
   <meta property="og:title" content="World Cup 2026 — Custom Calendar Subscription">
   <meta property="og:description" content="Follow favourite teams and add big or competitive matches to a calendar that updates automatically.">
-  <meta property="og:logo" content="https://worldcup.andrewe.ca/apple-touch-icon.png">
   <meta property="og:image" content="https://worldcup.andrewe.ca/og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -284,8 +283,10 @@ export function renderSettingsPage(locale = "en") {
       renderTeams(document.getElementById('team-filter').value);
     }
 
+    var lastPreviewQs = null;
+    var previewTimer = null;
+
     function update() {
-      var token = ++updateToken;
       var p = buildParams();
       var qs = p.toString();
       var url = location.origin + '/feed.ics' + (qs ? '?' + qs : '');
@@ -295,6 +296,17 @@ export function renderSettingsPage(locale = "en") {
       // and reloads back into the same selection. replaceState avoids history spam.
       history.replaceState(null, '', qs ? '?' + qs : location.pathname);
 
+      // Only refetch the preview when the settings actually changed (typing in
+      // the team filter bubbles here too), and debounce rapid changes so a
+      // burst of clicks costs one request, not one per click.
+      if (qs === lastPreviewQs) return;
+      lastPreviewQs = qs;
+      clearTimeout(previewTimer);
+      previewTimer = setTimeout(function () { fetchPreview(qs); }, 250);
+    }
+
+    function fetchPreview(qs) {
+      var token = ++updateToken;
       fetch('/api/preview' + (qs ? '?' + qs : '')).then(function (r) { return r.json(); }).then(function (data) {
         if (token !== updateToken) return;
         var ul = document.getElementById('preview');

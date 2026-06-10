@@ -5,12 +5,27 @@ import { fetchOdds, pairKey } from "./odds-api.js";
 // Join the-odds-api per-code probabilities onto football-data fixtures, producing
 // the oddsMap (keyed by fixture id) that the feed consumes. Re-orients each entry
 // to the fixture's own home/away.
+//
+// Finished fixtures are skipped, and when the same team pair appears more than
+// once (a group-stage meeting plus a knockout rematch), the entry's kickoff date
+// disambiguates — otherwise the upcoming game's odds would attach to both, and a
+// finished match could retroactively gain a "competitive" reason.
 export function joinOdds(fixtures, oddsList) {
-  const idx = new Map(oddsList.map((o) => [o.key, o]));
+  const idx = new Map();
+  for (const o of oddsList) {
+    const list = idx.get(o.key);
+    if (list) list.push(o);
+    else idx.set(o.key, [o]);
+  }
   const oddsMap = {};
   for (const f of fixtures) {
-    if (!f.home || !f.away) continue;
-    const o = idx.get(pairKey(f.home.code, f.away.code));
+    if (!f.home || !f.away || f.finished) continue;
+    const candidates = idx.get(pairKey(f.home.code, f.away.code));
+    if (!candidates) continue;
+    const date = String(f.utcKickoff || "").slice(0, 10);
+    const o = candidates.length === 1
+      ? candidates[0]
+      : candidates.find((c) => c.date === date);
     if (!o) continue;
     oddsMap[String(f.id)] = {
       homePct: o.byCode[f.home.code],

@@ -21,7 +21,7 @@ describe("feed", () => {
   it("builds a full ICS calendar of the selection", () => {
     const ics = buildFeed(fixtures, oddsMap, { teams: new Set(["USA"]), rank: null, competitive: null });
     expect(ics).toContain("BEGIN:VCALENDAR");
-    expect(ics).toContain("UID:wc2026-2@worldcup.andrewe.dev");
+    expect(ics).toContain("UID:wc2026-2@worldcup.andrewe.ca");
     expect(ics).not.toContain("UID:wc2026-1@");
   });
 

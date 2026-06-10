@@ -12,7 +12,6 @@ describe("settings page", () => {
     const html = renderSettingsPage();
     expect(html).toContain('property="og:title" content="World Cup 2026 — Custom Calendar Subscription"');
     expect(html).toContain('property="og:site_name" content="World Cup 2026 Custom Calendar"');
-    expect(html).toContain('property="og:logo" content="https://worldcup.andrewe.ca/apple-touch-icon.png"');
     expect(html).toContain('property="og:image" content="https://worldcup.andrewe.ca/og-image.png"');
     expect(html).toContain('name="twitter:card" content="summary_large_image"');
     expect(html).toContain('name="twitter:image" content="https://worldcup.andrewe.ca/og-image.png"');

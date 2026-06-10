@@ -24,6 +24,23 @@ describe("ics", () => {
     folded.split("\r\n").forEach((l, i) => {
       if (i > 0) expect(l.startsWith(" ")).toBe(true);
     });
+    expect(folded.replace(/\r\n /g, "")).toBe(long); // unfolding round-trips
+  });
+
+  it("folds to at most 75 octets per line, even with multi-byte emoji", () => {
+    const enc = new TextEncoder();
+    // 40 flag emoji = 40 codepoint-pairs but 8 bytes each in UTF-8 (320 octets).
+    const long = "SUMMARY:" + "🇪🇸".repeat(40);
+    const folded = foldLine(long);
+    folded.split("\r\n").forEach((l) => {
+      expect(enc.encode(l).length).toBeLessThanOrEqual(75);
+    });
+    expect(folded.replace(/\r\n /g, "")).toBe(long); // no emoji split in half
+  });
+
+  it("leaves a line of exactly 75 octets unfolded", () => {
+    const line = "X".repeat(75);
+    expect(foldLine(line)).toBe(line);
   });
 
   it("bookends flags around the matchup without a group suffix", () => {
@@ -61,7 +78,7 @@ describe("ics", () => {
 
   it("builds a VEVENT with stable UID, 2h end, location, group matchup, and odds", () => {
     const ev = buildVEvent({ fixture: fx(), odds: { homePct: 41, drawPct: 22, awayPct: 37 }, reasons: [{ id: "bigGame" }, { id: "competitive", values: { home: 41, away: 37, draw: 22 } }] });
-    expect(ev).toContain("UID:wc2026-42@worldcup.andrewe.dev");
+    expect(ev).toContain("UID:wc2026-42@worldcup.andrewe.ca");
     expect(ev).toContain("DTSTART:20260611T200000Z");
     expect(ev).toContain("DTEND:20260611T220000Z");
     expect(ev).toContain("LOCATION:SoFi Stadium\\, Inglewood");

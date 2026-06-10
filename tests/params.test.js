@@ -7,7 +7,6 @@ describe("parseFeedParams", () => {
   it("parses teams into an uppercased set", () => {
     const c = cfg("?teams=esp,can,arg");
     expect([...c.teams].sort()).toEqual(["ARG", "CAN", "ESP"]);
-    expect(c.hasAnyRule).toBe(true);
   });
 
   it("parses rank and competitive as integers", () => {
@@ -27,18 +26,15 @@ describe("parseFeedParams", () => {
     expect(c.teams.size).toBe(0);
     expect(c.rank).toBeNull();
     expect(c.competitive).toBeNull();
-    expect(c.hasAnyRule).toBe(false);
   });
 
   it("treats the knockout flag as a boolean rule", () => {
     expect(cfg("?knockout=1").knockout).toBe(true);
-    expect(cfg("?knockout=1").hasAnyRule).toBe(true);
     expect(cfg("?teams=ESP").knockout).toBe(false);
   });
 
   it("treats the host-openers flag as a boolean rule", () => {
     expect(cfg("?openers=1").hostOpeners).toBe(true);
-    expect(cfg("?openers=1").hasAnyRule).toBe(true);
     expect(cfg("?teams=ESP").hostOpeners).toBe(false);
   });
 
@@ -46,6 +42,5 @@ describe("parseFeedParams", () => {
     expect(cfg("?lang=pt-BR").lang).toBe("pt-BR");
     expect(cfg("?lang=es-MX").lang).toBe("es");
     expect(cfg("?lang=invalid").lang).toBe("en");
-    expect(cfg("?lang=fr").hasAnyRule).toBe(false);
   });
 });

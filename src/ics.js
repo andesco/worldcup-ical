@@ -15,19 +15,29 @@ export function escapeText(s) {
     .replace(/;/g, "\\;");
 }
 
-// Fold to <=73 chars per line on codepoint boundaries (avoids splitting emoji),
+// Fold to <=75 OCTETS per line (RFC 5545 measures bytes, not characters) on
+// codepoint boundaries (avoids splitting emoji — a flag is 8 bytes in UTF-8),
 // continuation lines start with a single space. CRLF line breaks per RFC5545.
+const UTF8 = new TextEncoder();
 export function foldLine(line) {
-  const chars = [...line];
-  if (chars.length <= 73) return line;
+  if (UTF8.encode(line).length <= 75) return line;
   const out = [];
-  let i = 0;
-  while (i < chars.length) {
-    const take = i === 0 ? 73 : 72;
-    const chunk = chars.slice(i, i + take).join("");
-    out.push(i === 0 ? chunk : " " + chunk);
-    i += take;
+  let current = "";
+  let bytes = 0;
+  let budget = 75; // continuation lines spend 1 octet on the leading space
+  for (const ch of line) { // for..of iterates codepoints, never half a surrogate pair
+    const w = UTF8.encode(ch).length;
+    if (bytes + w > budget) {
+      out.push(out.length === 0 ? current : " " + current);
+      current = ch;
+      bytes = w;
+      budget = 74;
+    } else {
+      current += ch;
+      bytes += w;
+    }
   }
+  out.push(out.length === 0 ? current : " " + current);
   return out.join("\r\n");
 }
 
@@ -92,7 +102,7 @@ export function buildVEvent({ fixture, odds, reasons, opts = {} }) {
   const end = icsDate(new Date(Date.parse(fixture.utcKickoff) + 2 * 3600 * 1000).toISOString());
   const lines = [
     "BEGIN:VEVENT",
-    `UID:wc2026-${fixture.id}@worldcup.andrewe.dev`,
+    `UID:wc2026-${fixture.id}@worldcup.andrewe.ca`,
     `DTSTAMP:${icsDate(new Date().toISOString())}`,
     `DTSTART:${start}`,
     `DTEND:${end}`,
