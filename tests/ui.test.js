@@ -23,6 +23,7 @@ describe("settings page", () => {
     expect(html).toContain('data-role="team-list"');
     expect(html).toContain('id="rank"');
     expect(html).toContain('id="knockout-on"');
+    expect(html).toContain('id="bbc-on"');
     expect(html).toContain('id="openers-on"');
     expect(html).toContain('id="flags-on"');
     expect(html).toContain('id="code-on"');

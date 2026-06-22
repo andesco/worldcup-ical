@@ -44,17 +44,37 @@ describe("joinOdds", () => {
 });
 
 function stubFetch() {
-  vi.stubGlobal("fetch", vi.fn(async (url) => ({
-    ok: true,
-    json: async () =>
-      url.includes("football-data.org")
-        ? { matches: [{ id: 1, utcDate: "2026-06-11T19:00:00Z", status: "TIMED", stage: "GROUP_STAGE", group: "GROUP_A",
-            homeTeam: { name: "Mexico" }, awayTeam: { name: "South Africa" }, score: { fullTime: {} } }] }
-        : [{ home_team: "South Africa", away_team: "Mexico", commence_time: "2026-06-11T19:00:00Z",
-            bookmakers: [{ markets: [{ key: "h2h", outcomes: [
-              { name: "Mexico", price: 1.4 }, { name: "South Africa", price: 8 }, { name: "Draw", price: 4.5 },
-            ] }] }] }],
-  })));
+  const initial = {
+    data: {
+      "football-world-cup-2022?tournament=world-cup": {
+        data: {
+          knockoutStage: {
+            preFinalRounds: [{ roundName: "Last 32", matches: [] }],
+          },
+        },
+      },
+    },
+  };
+  vi.stubGlobal("fetch", vi.fn(async (url) => {
+    if (url.includes("bbc.com")) {
+      return {
+        ok: true,
+        text: async () =>
+          `<script>window.__INITIAL_DATA__=${JSON.stringify(JSON.stringify(initial))};</script>`,
+      };
+    }
+    return {
+      ok: true,
+      json: async () =>
+        url.includes("football-data.org")
+          ? { matches: [{ id: 1, utcDate: "2026-06-11T19:00:00Z", status: "TIMED", stage: "GROUP_STAGE", group: "GROUP_A",
+              homeTeam: { name: "Mexico" }, awayTeam: { name: "South Africa" }, score: { fullTime: {} } }] }
+          : [{ home_team: "South Africa", away_team: "Mexico", commence_time: "2026-06-11T19:00:00Z",
+              bookmakers: [{ markets: [{ key: "h2h", outcomes: [
+                { name: "Mexico", price: 1.4 }, { name: "South Africa", price: 8 }, { name: "Draw", price: 4.5 },
+              ] }] }] }],
+    };
+  }));
 }
 
 describe("handleScheduled", () => {
@@ -64,6 +84,7 @@ describe("handleScheduled", () => {
 
     await handleScheduled({ scheduledTime: Date.parse("2026-06-11T17:30:00Z") }, env);
     expect(env.WC_STORE.store.has("fixtures")).toBe(true);
+    expect(env.WC_STORE.store.has("bbc_knockout")).toBe(true);
     expect(env.WC_STORE.store.has("odds")).toBe(false);
 
     await handleScheduled({ scheduledTime: Date.parse("2026-06-11T18:00:00Z") }, env);

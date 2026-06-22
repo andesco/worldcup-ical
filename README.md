@@ -35,6 +35,9 @@ A match is included when it satisfies at least one enabled rule:
   tournament-winner odds threshold.
 - **Knockout games:** includes all 32 knockout-stage matches, including matches
   whose teams are not known yet.
+- **BBC “As It Stands”:** optionally uses BBC Sport's projected knockout
+  participants. Confirmed participants are used in every knockout round for all
+  feeds; existing URLs and feeds without this option remain official-only.
 - **Host openers:** includes the first home match for Canada, Mexico, and the
   United States.
 - **Competitive games:** includes matches where the teams' win probabilities

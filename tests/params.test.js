@@ -33,6 +33,12 @@ describe("parseFeedParams", () => {
     expect(cfg("?teams=ESP").knockout).toBe(false);
   });
 
+  it("enables BBC projections only for bbc=1", () => {
+    expect(cfg("?bbc=1").bbc).toBe(true);
+    expect(cfg("?bbc=0").bbc).toBe(false);
+    expect(cfg("?teams=ESP").bbc).toBe(false);
+  });
+
   it("treats the host-openers flag as a boolean rule", () => {
     expect(cfg("?openers=1").hostOpeners).toBe(true);
     expect(cfg("?teams=ESP").hostOpeners).toBe(false);

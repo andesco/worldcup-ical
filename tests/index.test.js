@@ -7,9 +7,9 @@ function makeKV(init = {}) {
 }
 
 const fixtures = [
-  { id: 1, utcKickoff: "2026-06-11T20:00:00Z", status: "NS", finished: false, stage: "Group Stage - 1",
+  { id: 1, utcKickoff: "2026-06-23T20:00:00Z", status: "NS", finished: false, stage: "Group Stage - 1",
     venue: { name: "V", city: "C" }, home: { code: "ESP", name: "Spain" }, away: { code: "FRA", name: "France" }, score: null },
-  { id: 2, utcKickoff: "2026-06-12T20:00:00Z", status: "NS", finished: false, stage: "Group Stage - 1",
+  { id: 2, utcKickoff: "2026-06-24T20:00:00Z", status: "NS", finished: false, stage: "Group Stage - 1",
     venue: { name: "V", city: "C" }, home: { code: "USA", name: "USA" }, away: { code: "CAN", name: "Canada" }, score: null },
 ];
 const env = (odds = {}, version = "1000") => ({
@@ -137,6 +137,59 @@ describe("worker fetch", () => {
     const body = await res.text();
     expect(body).toContain("United States");
     expect(body).not.toContain("LANGUAGE=es");
+  });
+
+  it("uses BBC projections only when bbc=1 while preserving official partial matchups", async () => {
+    const kickoff = "2026-07-01T01:00:00Z";
+    const knockoutFixture = {
+      id: 79,
+      utcKickoff: kickoff,
+      status: "TIMED",
+      finished: false,
+      stage: "Round of 32",
+      knockout: true,
+      hostOpener: false,
+      slotHome: "A1",
+      slotAway: "X3",
+      venue: { name: "Estadio Azteca", city: "Mexico City" },
+      home: null,
+      away: null,
+      score: null,
+    };
+    const bbcMap = {
+      [kickoff]: {
+        home: { code: "MEX", name: "Mexico", official: true },
+        away: { code: "CPV", name: "Cape Verde Islands", official: false },
+      },
+    };
+    const knockoutEnv = (version) => ({
+      WC_STORE: makeKV({
+        fixtures: JSON.stringify([knockoutFixture]),
+        odds: "{}",
+        bbc_knockout: JSON.stringify(bbcMap),
+        data_version: version,
+      }),
+    });
+
+    const absent = await worker.fetch(
+      req("/feed.ics?teams=MEX&flags=0"),
+      knockoutEnv("bbc-absent")
+    );
+    expect(await absent.text()).toContain("SUMMARY:Mexico vs. X3");
+
+    const disabled = await worker.fetch(
+      req("/feed.ics?teams=MEX&flags=0&bbc=0"),
+      knockoutEnv("bbc-disabled")
+    );
+    expect(await disabled.text()).toContain("SUMMARY:Mexico vs. X3");
+
+    const enabled = await worker.fetch(
+      req("/feed.ics?teams=MEX&flags=0&bbc=1"),
+      knockoutEnv("bbc-enabled")
+    );
+    expect(await enabled.text()).toContain(
+      "SUMMARY:Mexico vs. Cape Verde Islands"
+    );
   });
 
   it("returns preview JSON of qualifying upcoming matches", async () => {

@@ -67,6 +67,7 @@ export function matchSummary(fixture, opts = {}) {
   // Knockout: never append the round as a suffix. R32 shows slot codes; later
   // rounds with undecided teams fall back to just the round name.
   if (h && a) return `${h} ${c.feed.versus} ${a}`;
+  if (h || a) return `${h || c.feed.tbd} ${c.feed.versus} ${a || c.feed.tbd}`;
   return stageName(stage, o.lang);
 }
 

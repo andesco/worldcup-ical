@@ -5,6 +5,7 @@ import { matchSummary } from "./ics.js";
 import { handleScheduled } from "./cron.js";
 import { renderSettingsPage } from "./ui.js";
 import { probabilityLines, reasonLabel, requestLocale } from "./localization.js";
+import { applyBbcKnockout } from "./bbc.js";
 
 function hashETag(str) {
   // FNV-1a 32-bit -> hex, wrapped in quotes per HTTP ETag syntax.
@@ -18,7 +19,7 @@ function hashETag(str) {
 
 // Isolate-level memo of the parsed dataset, keyed by data_version. A warm isolate
 // serving many feeds reuses this instead of re-reading KV + re-parsing 104 fixtures.
-let DATASET = { version: null, fixtures: null, oddsMap: null };
+let DATASET = { version: null, fixtures: null, oddsMap: null, bbcMap: null };
 
 // Isolate-level memo of the data version. The cron bumps it at most every 30
 // minutes, so re-reading KV on every request is wasted: a warm isolate caches
@@ -39,14 +40,16 @@ async function dataVersion(env) {
 
 async function readDataset(env, version) {
   if (DATASET.version === version && DATASET.fixtures) return DATASET;
-  const [fx, odds] = await Promise.all([
+  const [fx, odds, bbc] = await Promise.all([
     env.WC_STORE.get("fixtures"),
     env.WC_STORE.get("odds"),
+    env.WC_STORE.get("bbc_knockout"),
   ]);
   DATASET = {
     version,
     fixtures: fx ? JSON.parse(fx) : [],
     oddsMap: odds ? JSON.parse(odds) : {},
+    bbcMap: bbc ? JSON.parse(bbc) : {},
   };
   return DATASET;
 }
@@ -108,7 +111,7 @@ function htmlResponse(request) {
 // (translations, summary/description format) so subscribers aren't served 304s
 // or stale cached bodies until the next fixture change. Data-only updates are
 // still handled automatically by data_version.
-const BUILD = "2";
+const BUILD = "4";
 
 async function serveFeed(url, request, env, ctx) {
   const dataVer = await dataVersion(env);
@@ -138,9 +141,10 @@ async function serveFeed(url, request, env, ctx) {
   }
 
   // 3) Build once per (params × version); reuse the memoized parsed dataset.
-  const { fixtures, oddsMap } = await readDataset(env, dataVer);
+  const { fixtures, oddsMap, bbcMap } = await readDataset(env, dataVer);
   const config = configFrom(url);
-  const body = buildFeed(fixtures, oddsMap, config);
+  const resolvedFixtures = applyBbcKnockout(fixtures, bbcMap, config.bbc);
+  const body = buildFeed(resolvedFixtures, oddsMap, config);
   const response = new Response(body, {
     status: 200,
     headers: {
@@ -171,11 +175,12 @@ async function servePreview(url, env, ctx) {
     if (hit) return hit;
   }
 
-  const { fixtures, oddsMap } = await readDataset(env, dataVer);
+  const { fixtures, oddsMap, bbcMap } = await readDataset(env, dataVer);
   const config = configFrom(url);
+  const resolvedFixtures = applyBbcKnockout(fixtures, bbcMap, config.bbc);
   const opts = { flags: config.flags, code: config.code, lang: config.lang };
   const now = Date.now();
-  const matches = selectMatches(fixtures, oddsMap, config)
+  const matches = selectMatches(resolvedFixtures, oddsMap, config)
     .filter((s) => Date.parse(s.fixture.utcKickoff) >= now)
     .sort((a, b) => Date.parse(a.fixture.utcKickoff) - Date.parse(b.fixture.utcKickoff))
     .map((s) => ({

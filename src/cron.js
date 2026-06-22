@@ -1,6 +1,7 @@
 // src/cron.js
 import { fetchFixtures } from "./football-data.js";
 import { fetchOdds, pairKey } from "./odds-api.js";
+import { fetchBbcKnockout } from "./bbc.js";
 
 // Join the-odds-api per-code probabilities onto football-data fixtures, producing
 // the oddsMap (keyed by fixture id) that the feed consumes. Re-orients each entry
@@ -54,6 +55,20 @@ export async function handleScheduled(event, env) {
     console.error("fixtures pull failed:", err.message);
     const cached = await env.WC_STORE.get("fixtures");
     if (cached) fixtures = JSON.parse(cached);
+  }
+
+  // BBC identifies both officially clinched teams and its opt-in "As It
+  // Stands" projections. The feed decides which subset to apply.
+  try {
+    const bbcKnockout = await fetchBbcKnockout();
+    const json = JSON.stringify(bbcKnockout);
+    if (json !== (await env.WC_STORE.get("bbc_knockout"))) {
+      await env.WC_STORE.put("bbc_knockout", json);
+      changed = true;
+    }
+  } catch (err) {
+    console.error("BBC schedule pull failed:", err.message);
+    // keep last good BBC cache
   }
 
   // Odds only at the top of the hour (the-odds-api refreshes ~hourly anyway).

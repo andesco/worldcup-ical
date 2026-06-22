@@ -122,7 +122,7 @@ export function renderSettingsPage(locale = "en") {
 
     <small>
       <span data-i18n="sourceCode">${u.sourceCode}</span>: <a href="https://github.com/andesco/worldcup-ical">andesco/worldcup-ical</a><br />
-      <span data-i18n="sourceData">${u.sourceData}</span>: <a href="https://www.football-data.org">football-data.org</a> &middot; <a href="https://the-odds-api.com">the-odds-api</a>
+      <span data-i18n="sourceData">${u.sourceData}</span>: <a href="https://www.football-data.org">football-data.org</a> &middot; <a href="https://the-odds-api.com">the-odds-api</a> &middot; <a href="https://www.bbc.com/sport/football/world-cup/schedule">BBC Sport</a>
     </small>
 
     <form id="builder">
@@ -163,6 +163,10 @@ export function renderSettingsPage(locale = "en") {
         <label class="rule-row">
           <input type="checkbox" id="knockout-on">
           <span data-i18n="knockout">${u.knockout}</span>
+        </label>
+        <label class="rule-row">
+          <input type="checkbox" id="bbc-on">
+          <span data-i18n="bbc">${u.bbc}</span>
         </label>
         <label class="rule-row">
           <input type="checkbox" id="openers-on">
@@ -251,6 +255,7 @@ export function renderSettingsPage(locale = "en") {
       if (document.getElementById('bigGame-on').checked) p.set('rank', document.getElementById('rank').value);
       if (document.getElementById('competitiveGame-on').checked) p.set('competitive', document.getElementById('competitive').value);
       if (document.getElementById('knockout-on').checked) p.set('knockout', '1');
+      if (document.getElementById('bbc-on').checked) p.set('bbc', '1');
       if (document.getElementById('openers-on').checked) p.set('openers', '1');
       // Display options: flags on by default (encode only when off), code off by default.
       if (!document.getElementById('flags-on').checked) p.set('flags', '0');
@@ -390,6 +395,7 @@ export function renderSettingsPage(locale = "en") {
       else if (fresh) { document.getElementById('competitiveGame-on').checked = true; }
 
       if (sp.has('knockout') || fresh) { document.getElementById('knockout-on').checked = true; }
+      if (sp.get('bbc') === '1') { document.getElementById('bbc-on').checked = true; }
       if (sp.has('openers')) { document.getElementById('openers-on').checked = true; }
 
       // Display options: flags default on (off only when flags=0); code default off.

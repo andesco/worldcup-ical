@@ -76,6 +76,11 @@ describe("ics", () => {
     expect(matchSummary(ko)).toBe("🇪🇸 Spain vs. France 🇫🇷");
   });
 
+  it("shows a known team in a partially decided knockout matchup", () => {
+    const ko = { ...fx(), away: null, knockout: true, stage: "Round of 16", slotAway: null };
+    expect(matchSummary(ko, { flags: false })).toBe("Spain vs. TBD");
+  });
+
   it("builds a VEVENT with stable UID, 2h end, location, group matchup, and odds", () => {
     const ev = buildVEvent({ fixture: fx(), odds: { homePct: 41, drawPct: 22, awayPct: 37 }, reasons: [{ id: "bigGame" }, { id: "competitive", values: { home: 41, away: 37, draw: 22 } }] });
     expect(ev).toContain("UID:wc2026-42@worldcup.andrewe.ca");
